@@ -1,0 +1,5 @@
+context:
+    target: awx
+    tasks:
+        vmware: true
+        provision: false

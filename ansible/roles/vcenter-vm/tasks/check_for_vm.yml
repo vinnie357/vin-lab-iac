@@ -1,0 +1,29 @@
+# - name: debug check for VM
+#   debug:
+#     msg: "{{device.hostname}}"
+
+- name: check for VM
+  uri:
+    url: "https://{{ vcenter.host }}{{ vmUrl }}?filter.names.1={{device.hostname}}"
+    method: GET
+    headers:
+      vmware-api-session-id: "{{ vcenterToken.json.value }}"
+    return_content: true
+    validate_certs: false
+    status_code: 200
+  register: vmStatus
+  retries: 3
+  delay: 30
+  delegate_to: localhost
+
+- name: vm power state
+  set_fact:
+      vmPowerState: "{{ vmStatus.json.value[0].power_state }}"
+  ignore_errors: yes
+  when: "{{ vmStatus.json.value[0] }}"
+
+# - name: debug vm power state
+#   debug:
+#     msg: "{{vmPowerState}}"
+#   ignore_errors: yes
+#   when: "{{ vmStatus.json.value[0] }}"

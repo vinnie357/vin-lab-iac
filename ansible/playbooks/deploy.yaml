@@ -1,0 +1,12 @@
+- name: Deploy all
+  hosts: "{{context.target}}"
+  gather_facts: false
+  serial: 2
+
+  # vars:
+  #   item: "{{ hostvars[inventory_hostname] }}"
+
+  tasks:
+  - include_role:
+      name: vcenter-vm
+    when: "context.tasks.vmware"

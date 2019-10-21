@@ -1,0 +1,18 @@
+# - name: debug auth
+#   debug:
+#     msg: "{{vcenter.username}}"
+
+- name: get auth token vcenter
+  uri:
+    url: "https://{{ vcenter.host }}{{ vcenterAuthUrl }}"
+    method: POST
+    return_content: true
+    validate_certs: false
+    force_basic_auth: yes
+    user: "{{vcenter.username}}"
+    password: "{{vcenter.password}}"
+    status_code: 200
+  register: vcenterToken
+  retries: 3
+  delay: 30
+  delegate_to: localhost

@@ -1,0 +1,48 @@
+- name: debug ovf
+  debug:
+    msg: "{{device.vmware.template.file}}"
+  when: device.vmware.template.type == "ova"
+- name: "connect to vsphere and deploy {{ device.template.name }}"
+  vmware_deploy_ovf:
+    allow_duplicates: true
+    cluster: "{{ vcenter.cluster }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    datastore: "{{ device.datastore }}"
+    disk_provisioning: "thin"
+    fail_on_spec_warnings: true
+    ovf: "{{device.vmware.template.file}}"
+    hostname: "{{ vcenter.host }}"
+    name: "{{ device.hostname }}"
+    networks: "{{ device.vmware.networks }}"
+    password: "{{ vcenter.password }}"
+    port: "443"
+    power_on: true
+    properties:
+      net.mgmt.addr: "{{device.management.ipmask}}"
+      net.mgmt.gw: "{{device.management.gw}}"
+      user.root.pwd: "{{device.password}}"
+      user.admin.pwd: "{{device.password}}"
+    deployment_option: "{{ device.vmware.size }}"
+    username: "{{ vcenter.username }}"
+    validate_certs: false
+    # wait: true
+    wait_for_ip_address: true
+  register: ovaResult
+  delegate_to: localhost
+  when: vmStatus.json.value == [] and device.vmware.template.type == "ova"
+
+- name: "connect to vsphere and deploy {{ device.template.name }}"
+  vmware_guest:
+    hostname: "{{ vcenter.ip }}"
+    username: "{{ vcenter.username }}"
+    password: "{{ vcenter.password }}"
+    validate_certs: False
+    name: "{{ device.hostname }}"
+    template: "{{ device.vmware.template.name }}"
+    datacenter: "{{ vcenter.datacenter }}"
+    folder: "{{ device.vmware.folder }}"
+    state: poweredon
+    cluster: "{{ vcenter.cluster }}"
+    wait_for_ip_address: yes
+  delegate_to: localhost
+  when: device.vmware.template.type == "ovf"

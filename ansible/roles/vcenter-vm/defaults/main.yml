@@ -1,0 +1,5 @@
+---
+# defaults file for vcenter-vm
+
+vcenterAuthUrl: "/rest/com/vmware/cis/session"
+vmUrl: "/rest/vcenter/vm/"

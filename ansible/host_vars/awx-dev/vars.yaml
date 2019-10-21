@@ -1,0 +1,12 @@
+device:
+  hostname: "awx.vin-lab.com"
+  datastore: "synology_ssd"
+  vmware:
+    networks: "{u'Internal':u'192.168.3.0'}"
+    template:
+      name: "centos8"
+      type: "ovf"
+    size: "dualcpu"
+    folder: "/awx/dev"
+
+

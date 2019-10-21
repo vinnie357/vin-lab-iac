@@ -1,0 +1,8 @@
+- name: container test playbook
+  hosts: localhost
+  gather_facts: false
+  any_errors_fatal: true
+
+  tasks:
+    - debug:
+        msg: "{{ vault_test_item }}"

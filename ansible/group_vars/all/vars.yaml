@@ -1,0 +1,14 @@
+vcenter:
+  username: "{{ vault_vcenter_username }}"
+  password: "{{ vault_vcenter_password }}"
+  ip: "192.168.3.10"
+  host: "192.168.3.10"
+  datacenter: "vinlab.com"
+  cluster: "BladeCenter"
+  network:
+    "VM Network" : "192.168.2.0"
+bigiq:
+  user: "{{vault_bigiq_username}}"
+  password: "{{vault_bigiq_password}}"
+  host: "192.168.20.128"
+  licensepool: "bigip_best_50"
