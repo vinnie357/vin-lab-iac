@@ -1,5 +1,7 @@
 # vin-lab.com
-## ansible infrastructure as code
+## infrastructure as code
+- terraform
+- ansible
 ### requirements
 - docker
 - vcenter
@@ -126,6 +128,3 @@ C:\iso\vcenter-BIGIP-13.1.1.3-0.0.1.ALL-scsi.ova `
 rm /shared/vadc/.ve_cust_done
 shutdown -r now
 ```
-
-#### noteable issues
-if your bigip image name is not an FQDN the vapp options may not load
