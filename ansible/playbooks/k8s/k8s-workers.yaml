@@ -1,0 +1,44 @@
+- hosts: ~k8s-1-*
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: firewall worker
+      shell: |
+        firewall-cmd --permanent --add-port=10250/tcp &&
+        firewall-cmd --permanent --add-port=10255/tcp &&
+        firewall-cmd --permanent --add-port=8472/udp &&
+        firewall-cmd --permanent --add-port=30000-32767/tcp &&
+        firewall-cmd --add-masquerade --permanent &&
+        systemctl restart firewalld
+
+    - name: get join command
+      shell: kubeadm token create --print-join-command
+      register: join_command_raw
+
+    - name: set join command
+      set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+    - name: "Cluster token"
+      shell: kubeadm token list | cut -d ' ' -f1 | sed -n '2p'
+      register: K8S_TOKEN
+
+    - name: "CA Hash"
+      shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+      register: K8S_MASTER_CA_HASH
+    
+    - name: "Add K8S Token and Hash to dummy host"
+      add_host:
+        name:   "K8S_TOKEN_HOLDER"
+        token:  "{{ K8S_TOKEN.stdout }}"
+        hash:   "{{ K8S_MASTER_CA_HASH.stdout }}"
+        join_command: "{{ join_command }}"
+        
+- hosts: ~k8s-[2:3]-*
+  become: yes
+  tasks:
+    - name: join cluster
+      shell: "{{ hostvars['K8S_TOKEN_HOLDER'].join_command }} --ignore-preflight-errors all  >> node_joined.txt"
+      args:
+        chdir: $HOME
+        creates: node_joined.txt

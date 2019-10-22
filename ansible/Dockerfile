@@ -35,7 +35,16 @@ COPY hosts /etc/ansible/hosts
 RUN set -ex \
         && ansible-galaxy install f5devcentral.f5app_services_package \
         && ansible-galaxy install f5devcentral.bigip_onboard \
-        && ansible-galaxy install f5devcentral.bigip_ha_cluster
+        && ansible-galaxy install f5devcentral.bigip_ha_cluster \
+        && ansible-galaxy install geerlingguy.repo-epel \
+        && ansible-galaxy install geerlingguy.git \
+        && ansible-galaxy install geerlingguy.ansible \
+        && ansible-galaxy install geerlingguy.docker \
+        && ansible-galaxy install geerlingguy.pip \
+        && ansible-galaxy install geerlingguy.nodejs \
+        && ansible-galaxy install geerlingguy.awx \
+        && ansible-galaxy install geerlingguy.kubernetes
+
 #env vars
 ENV ANSIBLE_GATHERING smart
 ENV ANSIBLE_HOST_KEY_CHECKING false
@@ -47,6 +56,8 @@ ENV ANSIBLE_SSH_PIPELINING True
 ENV ANSIBLE_LIBRARY /ansible/library
 
 # files/playbooks
-#COPY . /ansible
+COPY . /etc/ansible
 
-WORKDIR /ansible
+WORKDIR /etc/ansible
+
+RUN chmod 700 $PWD

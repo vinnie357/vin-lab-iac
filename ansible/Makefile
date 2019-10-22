@@ -14,6 +14,19 @@ build:
 shell:
 	@echo " run docker container"
 	@docker run --rm -it \
+	--volume ${DIR}/context:/etc/ansible/context \
+	--volume ${DIR}/roles:/etc/ansible/roles \
+	--volume ${DIR}/playbooks:/etc/ansible/playbooks \
+	--volume ${DIR}/scripts:/etc/ansible/scripts \
+	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}:/root/.ssh/${SSH_KEY_NAME}:ro \
+	-e SSH_KEY_NAME=${SSH_KEY_NAME} \
+	-e ANSIBLE_VAULT_PASSWORD=${ANSIBLE_VAULT_PASSWORD} \
+	vin-lab-ansible \
+	bash -c ". scripts/.ssh_key.sh && bash"
+
+shell2:
+	@echo " run docker container"
+	@docker run --rm -it \
 	--volume ${DIR}:/ansible \
 	-e ANSIBLE_VAULT_PASSWORD=${ANSIBLE_VAULT_PASSWORD} \
 	${CONTAINER_IMAGE}

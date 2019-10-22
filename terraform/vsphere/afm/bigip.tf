@@ -95,6 +95,9 @@ resource "vsphere_virtual_machine" "vm" {
     eagerly_scrub    = "${data.vsphere_virtual_machine.template_from_ovf.disks.0.eagerly_scrub}"
     thin_provisioned = "${data.vsphere_virtual_machine.template_from_ovf.disks.0.thin_provisioned}"
   }
+  cdrom {
+    client_device = true
+  }
 
   clone {
     template_uuid = "${data.vsphere_virtual_machine.template_from_ovf.id}"

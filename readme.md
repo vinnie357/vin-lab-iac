@@ -8,10 +8,14 @@
 - big-iq
 
 # Ansible
+# check inventory
+ansible-inventory --list -i inventory.vmware.yml --vault-password-file scripts/.vault_pass.sh
+
+# test play with inventory
+ansible-playbook playbooks/test-inventory.yaml -i vinlab.vmware.yaml --vault-password-file scripts/.vault_pass.sh
 
 # ansible playbooks
 make ansible ARGS="item.yaml"
-
 ## shell
 make ansibleShell
 ## run
@@ -36,8 +40,10 @@ make apply
 
 ### specific env
 terraform apply -target module.vsphere -var-file="creds.tfvars"
-
-
+### apply specific resource
+terraform apply -target module.vsphere.module.awx
+### destroy specific resource
+terraform destroy -target module.vsphere.module.awx
 
 # vars
 parent
@@ -128,3 +134,54 @@ C:\iso\vcenter-BIGIP-13.1.1.3-0.0.1.ALL-scsi.ova `
 rm /shared/vadc/.ve_cust_done
 shutdown -r now
 ```
+
+## centos8 template edits
+### create your user and add ssh key
+centos/youraccount
+### disable virtulization
+```bash
+systemctl disable libvirtd.service                                                                                                                                       
+```
+add ssh authorized keys
+```bash
+sudo cat >> ~/.ssh/authorized_keys <<EOF
+ssh-rsa cdsfaszdfdsfafasd
+EOF
+```
+### ansible
+https://computingforgeeks.com/how-to-install-and-configure-ansible-on-rhel-8-centos-8/
+```bash
+sudo dnf install  --enablerepo epel-playground  ansible -y
+```
+### docker
+https://pocketadmin.tech/en/centos-8-install-docker/
+```bash
+dnf install https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm -y
+```
+### python
+https://linuxconfig.org/how-to-install-pip-in-redhat-8
+```bash
+dnf install python3-pip -y
+ln -sf python3 /usr/bin/python &&
+ln -sf pip3 /usr/bin/pip
+pip install docker
+pip install docker-compose
+```
+### nodejs
+https://github.com/nodesource/distributions/issues/845
+https://linuxconfig.org/how-to-install-node-js-on-redhat-8-linux
+```bash
+sudo dnf module install nodejs -y
+```
+### awx
+/root/.awx/awxcompose/
+
+
+## AWX
+ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/awx.yaml
+## K8S
+ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/k8s/main.yaml
+## AFM
+ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/afm.yaml
+## ASM
+ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/asm.yaml

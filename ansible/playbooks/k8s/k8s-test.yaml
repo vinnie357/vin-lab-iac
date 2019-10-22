@@ -1,0 +1,21 @@
+#kubectl create deployment nginx --image=nginx
+#kubectl expose deploy nginx --port 80 --target-port 80 --type NodePort
+#kubectl delete service nginx
+#kubectl delete deployment nginx- 
+- hosts: ~k8s-1-*
+  become: yes
+  become_user: vinnie
+  tasks:
+    - name: test deployment
+      command: kubectl create deployment nginx --image=nginx
+    - name: test container nginx
+      command: kubectl expose deploy nginx --port 80 --target-port 80 --type NodePort
+
+- hosts: ~k8s-1-*
+  become: yes
+  become_user: vinnie
+  tasks:
+    - name: delete test deployment
+      command: kubectl delete service nginx
+    - name: delted test container nginx
+      command: kubectl delete deployment nginx

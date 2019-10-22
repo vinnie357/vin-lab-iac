@@ -1,0 +1,54 @@
+- hosts: k8s-1-*
+  become: yes
+  tasks:
+    - name: firewall master
+      shell: |
+        firewall-cmd --permanent --add-port=6443/tcp &&
+        firewall-cmd --permanent --add-port=2379-2380/tcp &&
+        firewall-cmd --permanent --add-port=10250/tcp &&
+        firewall-cmd --permanent --add-port=10251/tcp &&
+        firewall-cmd --permanent --add-port=10252/tcp &&
+        firewall-cmd --permanent --add-port=10255/tcp &&
+        firewall-cmd --permanent --add-port=8472/udp &&
+        firewall-cmd --add-masquerade --permanent &&
+        firewall-cmd --permanent --add-port=30000-32767/tcp &&
+        systemctl restart firewalld
+    - name: default audit policy
+      shell: |
+        mkdir -p /etc/kubernetes
+        ## Create Default Audit Policy
+        cat > /etc/kubernetes/audit-policy.yaml <<EOF
+        apiVersion: audit.k8s.io/v1beta1
+        kind: Policy
+        rules:
+        - level: Metadata
+        EOF
+        mkdir -p /var/log/kubernetes/audit
+    - name: initialize the cluster
+      shell: kubeadm init --pod-network-cidr=10.244.0.0/16 >> cluster_initialized.txt
+      args:
+        chdir: $HOME
+        creates: cluster_initialized.txt
+
+    - name: create .kube directory
+      become: yes
+      become_user: vinnie
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+
+    - name: copy admin.conf to user's kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/vinnie/.kube/config
+        remote_src: yes
+        owner: vinnie
+
+    - name: install Pod network
+      become: yes
+      become_user: vinnie
+      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.txt
+      args:
+        chdir: $HOME
+        creates: pod_network_setup.txt

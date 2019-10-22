@@ -75,7 +75,7 @@ variable "vm_gateway" {
 
 variable "vm_dns" {
   description = "DNS for the vSphere virtual machine"
-  default = "192.168.3.251"
+  default = "192.168.2.251"
 }
 
 variable "vm_domain" {

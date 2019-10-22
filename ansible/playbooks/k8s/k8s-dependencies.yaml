@@ -1,0 +1,109 @@
+
+- hosts: k8s
+  become: yes
+  pre_tasks:
+  - name: add dependencies for centos8
+    shell: |
+      set -ex \
+      && sudo dnf install https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm -y \
+      && sudo dnf install python3-pip -y \
+      && ln -sf python3 /usr/bin/python \
+      && ln -sf pip3 /usr/bin/pip \
+      && yum remove -y podman-docker \
+      && pip install docker \
+      && pip install docker-compose
+  roles:
+    - geerlingguy.docker
+  tasks:
+   - name: stop Docker
+     service:
+       name: docker
+       state: stopped
+   - name: Setup daemon
+     shell: |
+      cat > /etc/docker/daemon.json <<EOF
+      {
+        "exec-opts": ["native.cgroupdriver=systemd"],
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "100m"
+        },
+        "storage-driver": "overlay2",
+        "storage-opts": [
+          "overlay2.override_kernel_check=true"
+        ]
+      }
+      EOF
+
+   - name: start Docker
+     service:
+       name: docker
+       state: started
+   
+   - name: disable swap
+     shell: |
+       swapoff -a
+       sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab  
+   
+   - name: load netfilter probe specifically
+     command: modprobe br_netfilter 
+
+   - name: disable SELinux
+     command: setenforce 0
+
+   - name: disable SELinux on reboot
+     selinux:
+       state: disabled
+
+   - name: ensure net.bridge.bridge-nf-call-ip6tables is set to 1
+     sysctl:
+      name: net.bridge.bridge-nf-call-ip6tables
+      value: 1
+      state: present
+
+   - name: ensure net.bridge.bridge-nf-call-iptables is set to 1
+     sysctl:
+      name: net.bridge.bridge-nf-call-iptables
+      value: 1
+      state: present
+
+   - name: add Kubernetes' YUM repository
+     yum_repository:
+      name: Kubernetes
+      description: Kubernetes YUM repository
+      baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+      gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+      gpgcheck: yes
+   
+   - name: add kube tools
+     yum:
+      state: present
+      update_cache: true
+      name: 
+        - nfs-utils
+        - kubelet-1.16.2
+        - kubeadm-1.16.2
+
+   - name: start kubelet
+     service:
+       name: kubelet
+       enabled: yes
+       state: started
+
+- hosts: ~k8s-1-*
+  become: yes
+  tasks:
+  #  - name: Create a centos user
+  #    user:
+  #     name: centos
+  #     password: "SHA512"
+  #     state: present
+  #     shell: /bin/bash 
+  #     system: no
+  #     createhome: yes
+  #     home: /home/centos
+   - name: install kubectl
+     yum:
+        name: kubectl-1.16.2
+        state: present
+        allow_downgrade: yes
