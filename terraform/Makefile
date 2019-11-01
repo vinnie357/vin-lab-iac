@@ -9,10 +9,18 @@ dev: build shell
 
 run: build test init plan apply
 
+build:
+	docker build -t ${CONTAINER_IMAGE} .
+
 shell:
 	@echo "tf shell"
 	@docker run --rm -it \
 	--volume ${TF_DIR}:/workspace \
+	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
+	-e ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET} \
+	-e ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID} \
+	-e ARM_TENANT_ID=${ARM_TENANT_ID} \
+	-v ${SSH_KEY_DIR}/:/root/.ssh/:ro \
 	vin-lab-terraform \
 
 apply:
@@ -20,6 +28,10 @@ apply:
 	@echo "apply"
 	@docker run --rm -it \
 	--volume ${TF_DIR}/vsphere:/workspace \
+	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
+	-e ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET} \
+	-e ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID} \
+	-e ARM_TENANT_ID=${ARM_TENANT_ID} \
 	vin-lab-terraform \
 	sh -c "terraform apply --auto-approve"
 
@@ -28,6 +40,10 @@ init:
 	@echo "init"
 	@docker run --rm -it \
 	--volume ${TF_DIR}/vsphere:/workspace \
+	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
+	-e ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET} \
+	-e ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID} \
+	-e ARM_TENANT_ID=${ARM_TENANT_ID} \
 	vin-lab-terraform \
 	sh -c "terraform init"
 
@@ -36,6 +52,10 @@ plan:
 	@echo "plan"
 	@docker run --rm -it \
 	--volume ${TF_DIR}/vsphere:/workspace \
+	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
+	-e ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET} \
+	-e ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID} \
+	-e ARM_TENANT_ID=${ARM_TENANT_ID} \
 	vin-lab-terraform \
 	sh -c "terraform plan"
 
@@ -44,11 +64,14 @@ destroy:
 	@echo "destroy"
 	@docker run --rm -it \
 	--volume ${TF_DIR}/vsphere:/workspace \
+	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
+	-e ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET} \
+	-e ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID} \
+	-e ARM_TENANT_ID=${ARM_TENANT_ID} \
 	vin-lab-terraform \
 	sh -c "terraform destroy --auto-approve"
 
-build:
-	docker build -t ${CONTAINER_IMAGE} .
+
 
 test: test1
 

@@ -27,11 +27,9 @@ module "vsphere" {
 #   subnets  = "${var.subnets}"
 # }
 
-# # Deploy azure Module
-# module "azure" {
-#   source   = "./azure"
-#   prefix   = "${var.prefix}"
-#   location = "${var.location}"
-#   cidr     = "${var.cidr}"
-#   subnets  = "${var.subnets}"
-# }
+# Deploy Azure Module
+module "azure" {
+  source   = "./azure"
+  AllowedIPs = "${var.AllowedIPs}"
+  key_path = "${var.key_path}"
+}
