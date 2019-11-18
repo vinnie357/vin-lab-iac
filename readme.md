@@ -187,3 +187,5 @@ ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/afm.yaml
 ## ASM
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/asm.yaml
+## nfs
+ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/nfs/main.yaml

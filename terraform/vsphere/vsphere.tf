@@ -82,6 +82,19 @@ module "awx" {
   vm_tags_environment = "${vsphere_tag.dev.id}"
 }
 
+# Deploy nfs machine
+module "nfs" {
+  source   = "./nfs"
+  #====================#
+  # vCenter connection #
+  #====================#
+  vsphere_datacenter = "${var.vsphere_datacenter}"
+  # vsphere_cluster = "${var.vsphere_cluster}"
+  vsphere_folder_env = "${var.vsphere_folder_dev}"
+  vm_tags_application = "${vsphere_tag_category.Application.id}"
+  vm_tags_environment = "${vsphere_tag.dev.id}"
+}
+
 # Deploy k8s cluster
 module "k8s" {
   source   = "./k8s"

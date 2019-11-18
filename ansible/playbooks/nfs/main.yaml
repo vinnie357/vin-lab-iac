@@ -1,0 +1,35 @@
+- hosts: nfs
+  pre_tasks:
+    - name: make share /mnt/k8s
+      become: yes
+      file:
+        path: /mnt/k8s
+        state: directory
+        mode: 0755
+    - name: make share env /mnt/k8s/dev
+      become: yes
+      file:
+        path: /mnt/k8s/dev
+        state: directory
+        mode: 0755
+    - name: firewall nfs tcp 2049
+      firewalld:
+        port: 2049/tcp
+        permanent: yes
+        state: enabled
+    - name: firewall nfs udp 2049
+      firewalld:
+        port: 2049/udp
+        permanent: yes
+        state: enabled
+    - name: restart firewall service
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: firewalld
+  roles:
+    - role: geerlingguy.nfs
+  vars:
+    nfs_exports: [ "/mnt/k8s/dev *(rw,sync,no_root_squash)" ]
+    nfs_rpcbind_state: started
+    nfs_rpcbind_enabled: true
