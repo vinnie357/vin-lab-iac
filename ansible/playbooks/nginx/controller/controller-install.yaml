@@ -1,0 +1,22 @@
+
+- hosts: controller
+  become: yes
+  pre_tasks:
+  - name: Copy file with owner and permissions
+    copy:
+      src: controller-installer-2.9.0.tar.gz
+      dest: /tmp/controller-installer-2.9.0.tar.gz
+      mode: '0644'
+  tasks:
+  - name: Extract installer into /tmp/
+    unarchive:
+      src: /tmp/controller-installer-2.9.0.tar.gz
+      dest: /tmp/
+      remote_src: true
+  - name: run installer
+    shell: |
+      cd /tmp/controller-installer &&
+      . ./install.sh
+    become: no
+  # - name: Run a script with arguments
+  #   script: /some/local/script.sh --some-argument 1234

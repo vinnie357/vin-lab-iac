@@ -4,7 +4,7 @@ vault.yaml
 *.ovf
 vinlab.vmware.yml
 creds.auto.tfvars
-
+controller-installer-2.9.0.tar.gz
 
 #https://github.com/github/gitignore/blob/master/Global/Ansible.gitignore
 *.retry

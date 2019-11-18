@@ -10,6 +10,37 @@
       command: kubectl create deployment nginx --image=nginx
     - name: test container nginx
       command: kubectl expose deploy nginx --port 80 --target-port 80 --type NodePort
+    - name: List installed Helm charts.
+      command: helm list
+      register: helm_list_results
+      changed_when: False
+    - name: gitlab helm charts
+      helm:
+        host: localhost
+        chart: 
+          name: gitlab
+          source:
+            type: repo
+    - name: Install gitlab with Helm.
+      command: >
+        helm install gitlab/gitlab \
+        --timeout 600 \
+        --set global.edition=ce \
+        --set global.hosts.domain=gitlabce.vin-lab.com \
+        --set certmanager-issuer.email=vinnie@vin-lab.com
+      when: "'gitlab' not in helm_list_results.stdout"
+
+    # - name: Get the details of the gitlab Service.
+    #   k8s:
+    #     api_version: v1
+    #     kind: Service
+    #     name: gitlab
+    #     namespace: default
+    #   register: gitlab_service
+
+    # - name: Print the NodePort of the gitlab Service.
+    #   debug:
+    #     var: gitlab_service.result.spec.ports[0].nodePort
 
 - hosts: ~k8s-1-*
   become: yes

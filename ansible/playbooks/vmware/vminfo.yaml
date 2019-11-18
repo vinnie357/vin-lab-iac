@@ -1,0 +1,23 @@
+- hosts: all
+  gather_facts: false
+  tasks:
+  - name: Get Tags from given VM Name
+    block:
+      - name: Get virtual machine info
+        vmware_vm_info:
+          hostname: '{{ vcenter.ip }}'
+          username: '{{ vault_vcenter_username }}'
+          password: '{{ vault_vcenter_password }}'
+          folder: "/dev/"
+          validate_certs: false
+        delegate_to: localhost
+        register: vm_info
+      - debug:
+          msg: "{{ item.vm_network }}"
+        with_items:
+          - "{{ vm_info.virtual_machines | json_query(query) }}"
+        # vars:
+        #   query: "[?guest_name=='{{k8s-1-*}}']"
+        vars:
+          query: "[?contains(guest_name, 'k8s-1')]"
+      

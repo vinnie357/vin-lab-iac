@@ -181,6 +181,8 @@ sudo dnf module install nodejs -y
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/awx.yaml
 ## K8S
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/k8s/main.yaml
+## controller
+ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/nginx/controller/main.yaml
 ## AFM
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/afm.yaml
 ## ASM

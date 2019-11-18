@@ -42,7 +42,8 @@ variable "vm_network" {
 
 variable "vm_template" {
   description = "Template used to create the vSphere virtual machines"
-  default = "centos8"
+#   default = "centos8"
+  default = "centos7"
 }
 
 variable "vm_linked_clone" {
@@ -92,5 +93,5 @@ variable "vm_name" {
 
 variable "vm_count" {
   description = "The number of virtual machine instances"
-  default = "1"
+  default = "2"
 }

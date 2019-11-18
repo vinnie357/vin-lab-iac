@@ -40,9 +40,9 @@ variable "vm_network" {
 
 variable "vm_template" {
   description = "Template used to create the vSphere virtual machines"
-#   default = "ubuntu-18.04"
-#   default = "centos8"
-  default = "centos7"
+  default = "ubuntu-18.04"
+#   default = "ubuntu-19.10"
+  #default = "centos8"
 }
 
 variable "vm_linked_clone" {
@@ -77,7 +77,7 @@ variable "vm_domain" {
 
 variable "vm_cpu" {
   description = "Number of vCPU for the vSphere virtual machines"
-  default = "4"
+  default = "8"
 }
 
 variable "vm_ram" {
@@ -87,10 +87,16 @@ variable "vm_ram" {
 
 variable "vm_name" {
   description = "The name of the vSphere virtual machines and the hostname of the machine"
-  default = "k8s"
+  default = "controller"
 }
+
+variable "vm_disk0_size" {
+  description = "The size in GB of the primary disk drive"
+  default = "30"
+}
+
 
 variable "vm_count" {
   description = "The number of virtual machine instances"
-  default = "3"
+  default = "1"
 }

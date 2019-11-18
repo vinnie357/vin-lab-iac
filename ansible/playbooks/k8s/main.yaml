@@ -1,17 +1,18 @@
 #https://www.digitalocean.com/community/tutorials/how-to-create-a-kubernetes-cluster-using-kubeadm-on-centos-7
 # requires useraccount/centos/yourname
 - hosts: k8s
-  pre_tasks:
+  roles:
+    - geerlingguy.docker
+  vars: 
+    ansible_distribution_major_version: "7"
+    docker_package: docker-ce
 - name: k8s-dependencies 
   import_playbook: k8s-dependencies.yaml
   vars: 
-    ansible_distribution_major_version: "8"
-    docker_package: docker-ce
-  # roles: 
-  #   - geerlingguy.kubernetes
-- name: k8s-master setup
-  import_playbook: k8s-master.yaml
-- name: k8s-workers setup
-  import_playbook: k8s-workers.yaml
+    k8s_version: "1.16.2"
+- name: k8s-cluster setup
+  import_playbook: k8s-setup.yaml 
+  vars: 
+    k8s_version: "1.16.2"
 - name: k8s-test setup
   import_playbook: k8s-test.yaml

@@ -2,15 +2,6 @@
   become: yes
   gather_facts: false
   tasks:
-    - name: firewall worker
-      shell: |
-        firewall-cmd --permanent --add-port=10250/tcp &&
-        firewall-cmd --permanent --add-port=10255/tcp &&
-        firewall-cmd --permanent --add-port=8472/udp &&
-        firewall-cmd --permanent --add-port=30000-32767/tcp &&
-        firewall-cmd --add-masquerade --permanent &&
-        systemctl restart firewalld
-
     - name: get join command
       shell: kubeadm token create --print-join-command
       register: join_command_raw
@@ -37,8 +28,47 @@
 - hosts: ~k8s-[2:3]-*
   become: yes
   tasks:
+    - name: firewall worker 10250
+      firewalld:
+        port: 10250/tcp
+        permanent: yes
+        state: enabled
+    - name: firewall worker 10255
+      firewalld:
+        port: 10255/tcp
+        permanent: yes
+        state: enabled
+    - name: firewall worker 8472
+      firewalld:
+        port: 8472/udp
+        permanent: yes
+        state: enabled
+    - name: firewall worker 30000-32767
+      firewalld:
+        port: 30000-32767/tcp
+        permanent: yes
+        state: enabled
+    - name: firewall worker masquerade
+      firewalld:
+        masquerade: yes
+        state: enabled
+        permanent: yes
+    - name: restart firewall service
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: firewalld
     - name: join cluster
       shell: "{{ hostvars['K8S_TOKEN_HOLDER'].join_command }} --ignore-preflight-errors all  >> node_joined.txt"
       args:
         chdir: $HOME
         creates: node_joined.txt
+
+- hosts: ~k8s-1-*
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: helm init tiller
+      become: yes
+      become_user: vinnie
+      command: helm init --service-account tiller --wait

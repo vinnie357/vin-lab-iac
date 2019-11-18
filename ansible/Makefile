@@ -18,6 +18,7 @@ shell:
 	--volume ${DIR}/roles:/etc/ansible/roles \
 	--volume ${DIR}/playbooks:/etc/ansible/playbooks \
 	--volume ${DIR}/scripts:/etc/ansible/scripts \
+	--volume ${DIR}/collections:/etc/ansible/collections \
 	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}:/root/.ssh/${SSH_KEY_NAME}:ro \
 	-e SSH_KEY_NAME=${SSH_KEY_NAME} \
 	-e ANSIBLE_VAULT_PASSWORD=${ANSIBLE_VAULT_PASSWORD} \

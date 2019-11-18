@@ -43,8 +43,10 @@ RUN set -ex \
         && ansible-galaxy install geerlingguy.pip \
         && ansible-galaxy install geerlingguy.nodejs \
         && ansible-galaxy install geerlingguy.awx \
-        && ansible-galaxy install geerlingguy.kubernetes
-
+        && ansible-galaxy collection install geerlingguy.k8s \
+        && ansible-galaxy install gantsign.helm \
+        && ansible-galaxy install nginxinc.nginx 
+        
 #env vars
 ENV ANSIBLE_GATHERING smart
 ENV ANSIBLE_HOST_KEY_CHECKING false

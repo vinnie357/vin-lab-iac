@@ -1,0 +1,21 @@
+
+- hosts: controller
+  become: true
+  pre_tasks:
+  - name: add dependencies for ubuntu
+    apt:
+      pkg:
+      - grep
+      - jq
+  - name: disable swap
+    shell: |
+      swapoff -a
+      sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab   
+  - name: Create a logical volume the size of all remaining space in the volume group
+    lvol:
+      vg: ubuntu-vg
+      lv: ubuntu-lv
+      size: 100%FREE
+  roles:
+    - geerlingguy.docker
+    # - geerlingguy.kubernetes
