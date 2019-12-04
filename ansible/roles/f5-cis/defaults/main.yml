@@ -1,0 +1,6 @@
+---
+# defaults file for f5-cis
+
+# host
+authUrl: "/mgmt/shared/authn/login"
+filePath: "{{ inventory_dir }}/host_vars/{{ inventory_hostname }}"

@@ -1,0 +1,39 @@
+
+- name: Add config
+  bigip_imish_config:
+    lines:
+      - router bgp 64512
+      - neighbor calico-k8s peer-group
+      - neighbor calico-k8s remote-as 64512
+      - neighbor 192.168.3.88 peer-group calico-k8s
+      - neighbor 192.168.3.89 peer-group calico-k8s
+      - neighbor 192.168.3.90 peer-group calico-k8s
+    match: exact
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost
+
+
+- name: Save the running configuration of the BIG-IP
+  bigip_config:
+    save: yes
+    provider:
+      server: lb.mydomain.com
+      password: secret
+      user: admin
+  delegate_to: localhost
+
+
+- name: check config
+  bigip_imish_config:
+    lines:
+      - show ip bgp neighbors
+      - show ip route
+    match: exact
+    provider:
+      user: admin
+      password: secret
+      server: lb.mydomain.com
+  delegate_to: localhost

@@ -1,0 +1,120 @@
+
+# setup bigip
+# - name: POST AS3
+#   uri:
+#     url: "https://{{ provider.server }}{{ as3Url }}"
+#     method: POST
+#     headers:
+#       X-F5-Auth-Token: "{{ token.json.token.token }}"
+#     return_content: true
+#     validate_certs: false
+#     body_format: json
+#     body: "{{ lookup('file', item.path, errors='strict' ) }}"
+#     status_code: 200
+#   register: as3Result
+#   loop: "{{ app_list.files }}"
+#   delegate_to: localhost
+
+- name: POST Partition
+  uri:
+    url: "https://{{ provider.server }}/mgmt/tm/sys/folder"
+    method: POST
+    headers:
+      X-F5-Auth-Token: "{{ token.json.token.token }}"
+    return_content: true
+    validate_certs: false
+    body_format: json
+    body: "{{ lookup('file', 'folder.json', errors='strict' ) }}"
+    status_code: 200
+  register: folderResult
+  delegate_to: localhost
+
+- name: POST BGP
+  uri:
+    url: "https://{{ provider.server }}/mgmt/tm/net/route-domain/~Common~0"
+    method: PATCH
+    headers:
+      X-F5-Auth-Token: "{{ token.json.token.token }}"
+    return_content: true
+    validate_certs: false
+    body_format: json
+    body: "{{ lookup('file', 'routing.json', errors='strict' ) }}"
+    status_code: 200
+  register: bgpResult
+  delegate_to: localhost
+  when: network.calico
+
+- name: POST disable tunnel sync
+  uri:
+    url: "https://{{ provider.server }}/mgmt/tm/sys/db/iptunnel.configsync"
+    method: POST
+    headers:
+      X-F5-Auth-Token: "{{ token.json.token.token }}"
+    return_content: true
+    validate_certs: false
+    body_format: json
+    body: "{\"value\":\"disable\"}"
+    status_code: 200
+  register: bgpResult
+  delegate_to: localhost
+  when: network.flannel
+
+- name: create tunnel vxlan profile
+  uri:
+    url: "https://{{ provider.server }}/mgmt/tm/net/tunnels/vxlan"
+    method: POST
+    headers:
+      X-F5-Auth-Token: "{{ token.json.token.token }}"
+    return_content: true
+    validate_certs: false
+    body_format: json
+    body: "{{ lookup('file', 'vxlan_flannel.json', errors='strict' ) }}"
+    status_code: 200
+  register: profileResult
+  delegate_to: localhost
+  when: network.flannel
+
+- name: create tunnel
+  uri:
+    url: "https://{{ provider.server }}/mgmt/tm/net/tunnels/tunnel"
+    method: POST
+    headers:
+      X-F5-Auth-Token: "{{ token.json.token.token }}"
+    return_content: true
+    validate_certs: false
+    body_format: json
+    body: "{\"name\": \"flannel_vxlan\",\"partition\": \"Common\",\"key\": 1,\"localAddress\": \"{{bigip.self}}\",\"profile\": \"/Common/fl-vxlan\" }"
+    status_code: 200
+  register: tunnelResult
+  delegate_to: localhost
+  when: network.flannel
+
+- name: Collect BIG-IP information
+  # base_mac_address
+  # selfip
+  # sofware version
+  bigip_device_info:
+    gather_subset:
+      - devices
+      - self-ips
+    provider:
+      server: lb.mydomain.com
+      user: admin
+      password: secret
+    validate_certs: false
+  delegate_to: localhost
+
+- name: create tunnel self-ip
+  uri:
+    url: "https://{{ provider.server }}/mgmt/tm/net/self"
+    method: POST
+    headers:
+      X-F5-Auth-Token: "{{ token.json.token.token }}"
+    return_content: true
+    validate_certs: false
+    body_format: json
+    body: "{\"name\": \"vxlan-local\",\"partition\": \"Common\",\"address\": \"10.233.125.15/18\", \"floating\": \"disabled\",\"vlan\": \"/Common/flannel_vxlan\"}"
+    status_code: 200
+  register: tunnelResult
+  delegate_to: localhost
+  when: network.flannel

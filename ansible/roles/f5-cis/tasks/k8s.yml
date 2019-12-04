@@ -1,0 +1,30 @@
+## create bigip node vxlan
+# sed -e "s/MAC_ADDR/$macAddr1/g" bigip/bigip1-node.yaml |kubectl create -f -
+
+  - name: Create node File
+    template:
+      src: "bigip-node.j2"
+      dest: "{{filePath}}/{{ bigip.name }}_.yaml"  
+      mode: 'preserve'
+    delegate_to: localhost
+    loop: "{{ as3List }}"
+
+
+
+## Create BIG-IP kubectl secret
+
+#kubectl create secret generic bigip-login --namespace kube-system --from-literal=username={{bigip.user}} --from-literal=password={{bigip.password}}
+
+
+## Deploy F5 BIG-IP CC
+
+#kubectl create -f bigip/f5-cc-deployment.yaml -n kube-system
+
+  - name: Create cis File
+    template:
+      src: "f5-cc-deployment.j2"
+      dest: "{{filePath}}/f5-cc-deployment.yaml"  
+      mode: 'preserve'
+    delegate_to: localhost
+    loop: "{{ as3List }}"
+

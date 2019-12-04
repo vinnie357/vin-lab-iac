@@ -95,18 +95,24 @@ resource "vsphere_virtual_machine" "vm" {
     thin_provisioned = "${data.vsphere_virtual_machine.template_from_ovf.disks.0.thin_provisioned}"
   }
 
-  clone {
+ clone {
     template_uuid = "${data.vsphere_virtual_machine.template_from_ovf.id}"
-  }
-  
-  vapp {
-    properties = {
-      #"guestinfo.tf.internal.id" = "42"
-      "net.mgmt.addr" = "${var.vm_mgmt_ip}${count.index + 1}"
-      "net.mgmt.gw" = "${var.vm_mgmt_gw}"
-      "user.root.pwd" = "${var.vm_root_password}"
-      "user.admin.pwd" = "${var.vm_admin_password}"
-      #deployment_option: "{{var.size}}"
+
+    customize {
+      linux_options {
+        host_name = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}"
+        domain    = "${var.vm_domain}"
+      }
+
+      network_interface {
+        ipv4_address = "${var.vm_mgmt_ip}${count.index + 1}"
+        ipv4_netmask = "${var.vm_netmask}"
+      }
+      network_interface {}
+      network_interface {}
+      network_interface {}
+
+      ipv4_gateway = "${var.vm_mgmt_gw}"
     }
   }
 }

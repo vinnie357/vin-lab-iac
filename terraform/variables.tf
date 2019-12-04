@@ -32,3 +32,13 @@ variable "azure_az1" {}
 
 variable "azure_az2" {}
 
+#====================#
+# GCP   connection   #
+#====================#
+variable "GCP_SA_FILE" {
+  description = "creds file name"
+}
+
+variable "GCP_PROJECT_ID" {
+  description = "project ID"
+}

@@ -1,0 +1,12 @@
+---
+# tasks file for f5-cis
+
+
+- import_tasks: status.yml
+- import_tasks: auth.yml
+- import_tasks: bigip.yml
+- import_tasks: bigip-calico.yml
+  when: network.calico
+- import_tasks: bigip-flannel.yml
+  when: network.flannel
+- import_tasks: k8s.yml

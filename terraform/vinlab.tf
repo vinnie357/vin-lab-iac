@@ -33,3 +33,12 @@ module "azure" {
   AllowedIPs = "${var.AllowedIPs}"
   key_path = "${var.key_path}"
 }
+
+# Deploy GCP Module
+module "gcp" {
+  source   = "./gcp"
+#   AllowedIPs = "${var.AllowedIPs}"
+#   key_path = "${var.key_path}"
+    GCP_SA_FILE = "${var.GCP_SA_FILE}"
+    GCP_PROJECT_ID = "${var.GCP_PROJECT_ID}"
+}

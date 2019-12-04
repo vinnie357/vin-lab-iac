@@ -1,0 +1,6 @@
+#https://docs.ansible.com/ansible/latest/scenario_guides/guide_gce.html
+plugin: gcp_compute
+projects:
+  - your-projects
+auth_kind: serviceaccount
+service_account_file: /gcp/my_account.json

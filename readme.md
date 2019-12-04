@@ -189,3 +189,57 @@ ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/asm.yaml
 ## nfs
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/nfs/main.yaml
+
+
+
+# kubespray
+## missing
+### user config
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+### auto complete
+centos:
+sudo yum install bash-completion -y
+echo 'source <(kubectl completion bash)' >>~/.bashrc
+kubectl completion bash >/etc/bash_completion.d/kubectl
+echo 'alias k=kubectl' >>~/.bashrc
+echo 'complete -F __start_kubectl k' >>~/.bashrc
+### nfs utils
+sudo yum install nfs-utils -y
+### helm3
+helm3
+curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+
+helm repo add  stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+### nfs provisoner
+
+helm install --namespace kube-system --name-template nfs-test stable/nfs-client-provisioner \
+  --set nfs.server=192.168.60.20 \
+  --set nfs.path=/volume2/k8s/test
+
+test from client:
+
+sudo mkdir /mnt/test
+sudo mount -t nfs -vvvv 192.168.3.53:/mnt/k8s/dev /mnt/test
+sudo touch /mnt/test/file.txt
+sudo touch /mnt/test/file1.txt
+
+patch to be default:
+kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+
+test pvc with grafana:
+helm install --namespace default --name-template grafana stable/grafana --set persistence.enabled=true --set persistence.type=pvc --set persistence.size=1Gi --set persistence.storageClassName=nfs-client
+kubectl get pvc
+
+## 1.16
+## work around for api change in 1.16
+/etc/kubernetes/manifests/kube-apiserver.yaml
+
+spec:
+    ...
+    - --runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true
+    - 
+kubectl -n kube-system delete pod kube-apiserver-whatever kube-controller-manager-whatever
+kubectl -n kube-system delete pod kube-apiserver-k8s-1-dev kube-controller-manager-k8s-1-dev

@@ -16,6 +16,17 @@ arm_subscription_id="your subscription id"
 arm_tenant_id="your tenant id"
 arm_client_id="your client id"
 arm_client_secret="your client secret"
+# gcp
+#key=API_KEY "your api key"
+gcp_credentials=$(cat creds/gcp/gcp_creds.json)
+gcp_sa_file="sa file name no extension"
+gcp_project_id="your porject id"
+#https://cloud.google.com/compute/docs/regions-zones/
+gcp_region="your desired region"
+gcp_auth_kind="your auth kind"
+gcp_service_account_email="your service account "
+gcp_service_account_file="your account file"
+gcp_scopes="your scope"
 # ansible
 vault_test_item="test-me"
 ansible_vault_password="your vault password"
@@ -50,6 +61,15 @@ export AWS_STACK_NAME=${aws_stack_name}
 # vcenter
 export VCENTER_USERNAME=${vcenter_username}
 export VCENTER_PASSWORD=${vcenter_password}
+# gcp
+export GCP_CREDENTIALS=${gcp_credentials}
+export GCP_AUTH_KIND=${gcp_auth_kind}
+export GCP_SERVICE_ACCOUNT_EMAIL${gcp_service_account_email}
+export GCP_SERVICE_ACCOUNT_FILE${gcp_service_account_file}
+export GCP_SCOPES${gcp_scopes}
+export GCP_SA_FILE=${gcp_sa_file}
+export GCP_PROJECT_ID=${gcp_project_id}
+export GCP_REGION=${gcp_region}
 ## export bigiq vars
 export BIGIQ_HOST=${bigiq_host}
 export BIGIQ_USERNAME=${bigiq_username}

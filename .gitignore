@@ -5,6 +5,12 @@ vault.yaml
 vinlab.vmware.yml
 creds.auto.tfvars
 controller-installer-2.9.0.tar.gz
+creds/gcp/*.json
+!creds/gcp/my_example_creds.json
+creds/aws/*.json
+!creds/aws/my_example_creds.json
+creds/azure/*.json
+!creds/azure/my_example_creds.json
 
 #https://github.com/github/gitignore/blob/master/Global/Ansible.gitignore
 *.retry

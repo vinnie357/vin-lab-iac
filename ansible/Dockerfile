@@ -20,6 +20,7 @@ RUN set -ex \
  && pip3 install awscli --upgrade \
  && pip3 install pyvmomi \
  && pip3 install --upgrade git+https://github.com/vmware/vsphere-automation-sdk-python.git \
+ && pip3 install requests google-auth \
  && apk del build-dependencies \
  && rm -rf /var/cache/apk/* \
  && mkdir -p /etc/ansible
