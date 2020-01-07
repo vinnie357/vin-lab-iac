@@ -243,3 +243,9 @@ spec:
     - 
 kubectl -n kube-system delete pod kube-apiserver-whatever kube-controller-manager-whatever
 kubectl -n kube-system delete pod kube-apiserver-k8s-1-dev kube-controller-manager-k8s-1-dev
+
+# GCE
+machine type
+image name
+gcloud compute images list --project f5-7626-networks-public | grep payg | grep 15-0-1-1-0-0-3
+gcloud compute images list --project f5-7626-networks-public | grep byol | grep 15-0-1-1-0-0-3

@@ -41,4 +41,6 @@ module "gcp" {
 #   key_path = "${var.key_path}"
     GCP_SA_FILE = "${var.GCP_SA_FILE}"
     GCP_PROJECT_ID = "${var.GCP_PROJECT_ID}"
+    sshKeyPath = "${var.GCP_SSH_KEY_PATH}"
+    adminSrcAddr = "${var.adminSrcAddr}"
 }

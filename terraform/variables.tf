@@ -42,3 +42,16 @@ variable "GCP_SA_FILE" {
 variable "GCP_PROJECT_ID" {
   description = "project ID"
 }
+
+variable "GCP_SSH_KEY_PATH" {
+    description = " path to ssh public key for vms"
+  
+}
+
+#====================#
+# admin   connection #
+#====================#
+
+variable "adminSrcAddr" {
+  description = "admin source range in CIDR x.x.x.x/24"
+}
