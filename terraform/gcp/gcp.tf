@@ -60,6 +60,9 @@ module "afm" {
   #====================#
   name = "${var.prefix}"
   gce_ssh_pub_key_file = "${var.sshKeyPath}"
+  adminSrcAddr = "${var.adminSrcAddr}"
+  adminPass = "${var.adminPass}"
+  adminAccountName = "${var.adminAccount}"
 #   mgmt_vpc = "${google_compute_network.vpc_network_mgmt.self_link}"
 #   int_vpc = "${google_compute_network.vpc_network_int.self_link}"
 #   ext_vpc = "${google_compute_network.vpc_network_ext.self_link}"

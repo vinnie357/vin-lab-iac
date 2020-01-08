@@ -43,4 +43,6 @@ module "gcp" {
     GCP_PROJECT_ID = "${var.GCP_PROJECT_ID}"
     sshKeyPath = "${var.GCP_SSH_KEY_PATH}"
     adminSrcAddr = "${var.adminSrcAddr}"
+    adminAccount = "${var.adminAccount}"
+    adminPass = "${var.adminPass}"
 }

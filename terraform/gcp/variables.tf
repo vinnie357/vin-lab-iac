@@ -40,3 +40,10 @@ variable "gce_ssh_user" {
   default = "admin"
   
 }
+variable "adminPass" {
+  description = " admin account password"
+}
+
+variable "adminAccount" {
+  description = " admin account name"
+}

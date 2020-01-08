@@ -1,15 +1,59 @@
 #!/bin/bash
+deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
+# logging
+LOG_FILE=${onboard_log}
+if [ ! -e $LOG_FILE ]
+then
+     touch $LOG_FILE
+     exec &>>$LOG_FILE
+else
+    #if file exists, exit as only want to run once
+    exit
+fi
+
+exec 1>$LOG_FILE 2>&1
+
+echo  "wait for mcpd"
+checks=0
+while [[ "$checks" -lt 120 ]]; do 
+    echo "checking mcpd"
+    tmsh -a show sys mcp-state field-fmt | grep -q running
+   if [ $? == 0 ]; then
+       echo "mcpd ready"
+       break
+   fi
+   echo "mcpd not ready yet"
+   let checks=checks+1
+   sleep 10
+done 
+#
+#
+# create admin account and password
+echo "create admin account"
+admin_username='${uname}'
+admin_password='${upassword}'
+# echo  -e "create cli transaction;
+tmsh create auth user $admin_username password $admin_password shell bash partition-access add { all-partitions { role admin } };
+# modify /sys db systemauth.primaryadminuser value $admin_username;
+# submit cli transaction" | tmsh -q
+tmsh list auth user $admin_username
+tmsh save sys config
+# copy ssh key
+mkdir -p /home/$admin_username/.ssh/
+cp /home/admin/.ssh/authorized_keys /home/xadmin/.ssh/authorized_keys
+echo " admin account changed"
+# change admin password only
+# echo "change admin password"
+# echo "admin:$admin_password" | chpasswd
+# echo "changed admin password"
 #
 # vars
 #
-admin_username='${uname}'
-admin_password='${upassword}'
 CREDS="$admin_username:$admin_password"
 DO_URL='${DO_onboard_URL}'
 DO_FN=$(basename "$DO_URL")
 AS3_URL='${AS3_URL}'
 AS3_FN=$(basename "$AS3_URL")
-LOG_FILE=${onboard_log}
 #atc="f5-declarative-onboarding f5-appsvcs-extension f5-telemetry-streaming"
 atc="f5-declarative-onboarding f5-appsvcs-extension"
 # constants
@@ -38,26 +82,11 @@ cat > /config/as3.json <<EOF
 ${AS3_Document}
 EOF
 
-DO_BODY_01="/config/do1.json"
-DO_BODY_02="/config/do2.json"
-AS3_BODY="/config/as3.json"
-
 DO_URL_POST="/mgmt/shared/declarative-onboarding"
 AS3_URL_POST="/mgmt/shared/appsvcs/declare"
+#
 # BIG-IPS ONBOARD SCRIPT
-
-
-if [ ! -e $LOG_FILE ]
-then
-     touch $LOG_FILE
-     exec &>>$LOG_FILE
-else
-    #if file exists, exit as only want to run once
-    exit
-fi
-
-exec 1>$LOG_FILE 2>&1
-
+#
 # CHECK TO SEE NETWORK IS READY
 CNT=0
 while true
@@ -135,7 +164,7 @@ done
 function checkDO() {
     # Check DO Ready
     CNT=0
-    while true
+    while [ $CNT -le 4 ]
     do
     doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.status)
     if [[ $doStatus == "OK" ]]; then
@@ -143,8 +172,8 @@ function checkDO() {
         echo "Declarative Onboarding $version online "
         break
     else
-        echo "Status $doStatus"
-        break
+        echo "DO Status $doStatus"
+        CNT=$[$CNT+1]
     fi
     sleep 10
     done
@@ -152,7 +181,7 @@ function checkDO() {
 function checkAS3() {
     # Check AS3 Ready
     CNT=0
-    while true
+    while [ $CNT -le 4 ]
     do
     as3Status=$(curl -i -u $CREDS http://localhost:8100$as3CheckUrl | grep HTTP | awk '{print $2}')
     if [[ $as3Status == "200" ]]; then
@@ -160,8 +189,8 @@ function checkAS3() {
         echo "As3 $version online "
         break
     else
-        echo "Status $as3Status"
-        break
+        echo "AS3 Status $as3Status"
+        CNT=$[$CNT+1]
     fi
     sleep 10
     done
@@ -169,7 +198,7 @@ function checkAS3() {
 function checkTS() {
     # Check TS Ready
     CNT=0
-    while true
+    while [ $CNT -le 4 ]
     do
     tsStatus=$(curl -i -u $CREDS http://localhost:8100$tsCheckUrl | grep HTTP | awk '{print $2}')
     if [[ $tsStatus == "200" ]]; then
@@ -177,8 +206,8 @@ function checkTS() {
         echo "Telemetry Streaming $version online "
         break
     else
-        echo "Status $tsStatus"
-        break
+        echo "TS Status $tsStatus"
+        CNT=$[$CNT+1]
     fi
     sleep 10
     done
@@ -299,11 +328,11 @@ function runDO() {
     done
 }
 # run DO
-if [ $1 == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
-    echo "running do for 01"
+if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+    echo "running do for 01 in:$deviceId"
     runDO do1.json
 elif [[ "$doStatus" = *"online"* ]]; then
-    echo "running do for 02"
+    echo "running do for 02 in:$deviceId"
     runDO do2.json
 else
     echo "DO not online status: $doStatus"
@@ -356,15 +385,16 @@ function runAS3 () {
 #
 # create logging profiles
 # network profile
-echo  -e 'create cli transaction;
-create security log profile local_afm_log ip-intelligence { log-publisher local-db-publisher } network replace-all-with { local_afm_log { filter { log-acl-match-accept enabled log-acl-match-drop enabled log-acl-match-reject enabled log-geo-always enabled log-ip-errors enabled log-tcp-errors enabled log-tcp-events enabled log-translation-fields enabled } publisher local-db-publisher } }
-submit cli transaction' | tmsh -q
+echo "creating log profiles"
+# echo  -e 'create cli transaction;
+tmsh create security log profile local_afm_log ip-intelligence { log-publisher local-db-publisher } network replace-all-with { local_afm_log { filter { log-acl-match-accept enabled log-acl-match-drop enabled log-acl-match-reject enabled log-geo-always enabled log-ip-errors enabled log-tcp-errors enabled log-tcp-events enabled log-translation-fields enabled } publisher local-db-publisher } }
+# submit cli transaction' | tmsh -q
 #
 # asm profile
-echo  -e 'create cli transaction;
-create security log profile local_sec_log application replace-all-with { local_sec_log { filter replace-all-with { log-challenge-failure-requests { values replace-all-with { enabled } } request-type { values replace-all-with { all } } } response-logging illegal } } bot-defense replace-all-with { local_sec_log { filter { log-alarm enabled log-block enabled log-browser enabled log-browser-verification-action enabled log-captcha enabled log-challenge-failure-request enabled log-device-id-collection-request enabled log-honey-pot-page enabled log-malicious-bot enabled log-mobile-application enabled log-none enabled log-rate-limit enabled log-redirect-to-pool enabled log-suspicious-browser enabled log-tcp-reset enabled log-trusted-bot enabled log-unknown enabled log-untrusted-bot enabled } local-publisher /Common/local-db-publisher } };
-submit cli transaction' | tmsh -q
-
+# echo  -e 'create cli transaction;
+tmsh create security log profile local_sec_log application replace-all-with { local_sec_log { filter replace-all-with { log-challenge-failure-requests { values replace-all-with { enabled } } request-type { values replace-all-with { all } } } response-logging illegal } } bot-defense replace-all-with { local_sec_log { filter { log-alarm enabled log-block enabled log-browser enabled log-browser-verification-action enabled log-captcha enabled log-challenge-failure-request enabled log-device-id-collection-request enabled log-honey-pot-page enabled log-malicious-bot enabled log-mobile-application enabled log-none enabled log-rate-limit enabled log-redirect-to-pool enabled log-suspicious-browser enabled log-tcp-reset enabled log-trusted-bot enabled log-unknown enabled log-untrusted-bot enabled } local-publisher /Common/local-db-publisher } };
+# submit cli transaction' | tmsh -q
+echo "done creating log profiles"
 # run as3
 CNT=0
 while true
@@ -381,7 +411,6 @@ do
         break
     fi
 done
-
 
 # remove declarations
 # rm -f /config/do1.json

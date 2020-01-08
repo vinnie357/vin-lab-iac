@@ -51,3 +51,9 @@ outputs
 region
 mgmt url
 app address
+
+
+# onboarding logs
+google_metadata_script_runner --script-type startup --debug 
+cat /var/log/messages
+cat /var/log/startup-script.log

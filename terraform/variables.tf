@@ -55,3 +55,10 @@ variable "GCP_SSH_KEY_PATH" {
 variable "adminSrcAddr" {
   description = "admin source range in CIDR x.x.x.x/24"
 }
+
+variable "adminAccount" {
+  description = "admin account name"
+}
+variable "adminPass" {
+  description = "admin account password"
+}
