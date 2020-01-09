@@ -167,12 +167,16 @@ function checkDO() {
     while [ $CNT -le 4 ]
     do
     #doStatus=$(curl -i -u $CREDS http://localhost:8100$doCheckUrl | grep HTTP | awk '{print $2}')
-    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq .code)
-    if [ $? == 1 ]; then
-        doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
-    fi
-    if [ $? == 1 ]; then
+    doStatusType=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r type )
+    if [ "$doStatusType" == "object" ]; then
+        doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .code)
+        if [ $? == 1 ]; then
+            doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
+        fi
+    elif [ "$doStatusType" == "array" ]; then
         doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.code)
+    else
+        echo "unknown type:$doStatusType"
     fi
     echo "status $doStatus"
     if [[ $doStatus == "200" ]]; then
@@ -181,9 +185,9 @@ function checkDO() {
         echo "Declarative Onboarding $version online "
         break
     elif [[ $doStatus == "404" ]]; then
-        echo "DO Status $doStatus"
+        echo "DO Status: $doStatus"
         bigstart restart restnoded
-        sleep 30
+        sleep 60
         bigstart status restnoded | grep running
         status=$?
         echo "restnoded:$status"
@@ -208,7 +212,7 @@ function checkAS3() {
     elif [[ $as3Status == "404" ]]; then
         echo "AS3 Status $as3Status"
         bigstart restart restnoded
-        sleep 10
+        sleep 60
         bigstart status restnoded | grep running
         status=$?
         echo "restnoded:$status"
@@ -299,7 +303,7 @@ function runDO() {
                     break
                 elif [ $status == "RUNNING" ]; then
                     echo "Status: $status  Not done yet..."
-                    sleep 60
+                    sleep 120
                     waitStatus=$(waitDO)
                     if [ $waitStatus == "FINISHED" ]; then
                         break
@@ -308,6 +312,9 @@ function runDO() {
                     fi
                 elif [ $status == "OK" ]; then
                     echo "Done Status code: $status  No change $task"
+                    break
+                elif [ $status == "ROLLING_BACK" ]; then
+                    echo "Failed ROLLING_BACK: $status  Check declaration $task"
                     break
                 else
                     echo "other $status"
@@ -325,6 +332,11 @@ function runDO() {
                 error=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
                 echo "Error $task, $error"
                 CNT=$[$CNT+1]
+                ;;
+            ROLLING_BACK)
+                # Rolling back
+                echo "Rolling back failed status: $status"
+                break
                 ;;
             OK)
                 # complete no change

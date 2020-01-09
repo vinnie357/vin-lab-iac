@@ -58,6 +58,7 @@ google_metadata_script_runner --script-type startup --debug
 cat /var/log/messages
 cat /var/log/startup-script.log
 
+# as3 tf provider
 https://support.f5.com/csp/article/K23449665
 
 use this for as3? but there may be some issues waiting/timing
@@ -105,3 +106,6 @@ task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POS
 
 status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
 echo "as3 post status: $status"
+
+rm /var/log/startup-script.log
+google_metadata_script_runner --script-type startup --debug 

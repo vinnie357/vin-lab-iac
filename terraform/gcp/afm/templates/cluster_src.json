@@ -55,6 +55,12 @@
             "allowService": "default",
             "trafficGroup": "traffic-group-local-only"
         },
+        "default": {
+            "class": "Route",
+            "gw": "${gateway}",
+            "network": "default",
+            "mtu": 1500
+        },
         "configsync": {
             "class": "ConfigSync",
             "configsyncIp": "/Common/external-self/address"

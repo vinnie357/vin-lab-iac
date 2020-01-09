@@ -55,7 +55,7 @@ data "template_file" "vm_onboard" {
 }
 #Declarative Onboarding template 01
 data "template_file" "vm01_do_json" {
-  template = "${file("${path.module}/templates/cluster.json")}"
+  template = "${file("${path.module}/templates/standalone.json")}"
 
   vars = {
     #Uncomment the following line for BYOL
@@ -77,7 +77,7 @@ data "template_file" "vm01_do_json" {
 }
 #Declarative Onboarding template 02
 data "template_file" "vm02_do_json" {
-  template = "${file("${path.module}/templates/cluster.json")}"
+  template = "${file("${path.module}/templates/standalone.json")}"
 
   vars = {
     #Uncomment the following line for BYOL
