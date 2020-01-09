@@ -1,53 +1,15 @@
-# networks
-# vpc
-resource "google_compute_network" "vpc_network_mgmt" {
-  name                    = "terraform-network-mgmt"
-  auto_create_subnetworks = "false"
-  routing_mode = "REGIONAL"
-}
-resource "google_compute_subnetwork" "vpc_network_mgmt_sub" {
-  name          = "mgmt-sub"
-  ip_cidr_range = "10.0.10.0/24"
-  region        = "us-east1"
-  network       = "${google_compute_network.vpc_network_mgmt.self_link}"
-
-}
-resource "google_compute_network" "vpc_network_int" {
-  name                    = "terraform-network-int"
-  auto_create_subnetworks = "false"
-  routing_mode = "REGIONAL"
-}
-resource "google_compute_subnetwork" "vpc_network_int_sub" {
-  name          = "int-sub"
-  ip_cidr_range = "10.0.20.0/24"
-  region        = "us-east1"
-  network       = "${google_compute_network.vpc_network_int.self_link}"
-
-}
-resource "google_compute_network" "vpc_network_ext" {
-  name                    = "terraform-network-ext"
-  auto_create_subnetworks = "false"
-  routing_mode = "REGIONAL"
-}
-resource "google_compute_subnetwork" "vpc_network_ext_sub" {
-  name          = "ext-sub"
-  ip_cidr_range = "10.0.30.0/24"
-  region        = "us-east1"
-  network       = "${google_compute_network.vpc_network_ext.self_link}"
-
-}
 
 # Obtain Gateway IP for each Subnet
 locals {
   depends_on = ["google_compute_network.vpc_network_mgmt", "google_compute_network.vpc_network_mgmt_ext","google_compute_network.vpc_network_mgmt_int"]
-  mgmt_gw    = "${google_compute_subnetwork.vpc_network_mgmt_sub.gateway_address}"
-  ext_gw     = "${google_compute_subnetwork.vpc_network_ext_sub.gateway_address}"
-  int_gw     = "${google_compute_subnetwork.vpc_network_int_sub.gateway_address}"
+  mgmt_gw    = "${var.mgmt_subnet.gateway_address}"
+  ext_gw     = "${var.ext_subnet.gateway_address}"
+  int_gw     = "${var.int_subnet.gateway_address}"
 }
 # firewall
 resource "google_compute_firewall" "mgmt" {
-  name    = "mgmt-firewall"
-  network = "${google_compute_network.vpc_network_mgmt.name}"
+  name    = "${var.projectPrefix}mgmt-firewall"
+  network = "${var.mgmt_vpc.name}"
 
   allow {
     protocol = "icmp"
@@ -61,8 +23,8 @@ resource "google_compute_firewall" "mgmt" {
   source_ranges = ["${var.adminSrcAddr}"]
 }
 resource "google_compute_firewall" "app" {
-  name    = "app-firewall"
-  network = "${google_compute_network.vpc_network_ext.name}"
+  name    = "${var.projectPrefix}app-firewall"
+  network = "${var.ext_vpc.name}"
 
   allow {
     protocol = "icmp"
@@ -150,7 +112,7 @@ data "template_file" "as3_json" {
 # bigips
 resource "google_compute_instance" "vm_instance" {
   count            = "${var.vm_count}"
-  name             = "${var.name}-${count.index + 1}-instance"
+  name             = "${var.projectPrefix}${var.name}-${count.index + 1}-instance"
   machine_type = "${var.bigipMachineType}"
 
   boot_disk {
@@ -159,18 +121,19 @@ resource "google_compute_instance" "vm_instance" {
     }
   }
   metadata = {
-    ssh-keys = "${var.gce_ssh_user}:${file(var.gce_ssh_pub_key_file)}"
+    ssh-keys = "${var.adminAccountName}:${file(var.gce_ssh_pub_key_file)}"
     block-project-ssh-keys = true
-    startup-script = "${data.template_file.vm_onboard.rendered}"
+    #startup-script = "${data.template_file.vm_onboard.rendered}"
     #metadata_startup_script = "deviceId=${count.index + 1}\n ${data.template_file.vm_onboard.rendered}"
     deviceId = "${count.index + 1}"
  }
+  metadata_startup_script = "${data.template_file.vm_onboard.rendered}"
 
   network_interface {
     # mgmt
     # A default network is created for all GCP projects
-    network       = "${google_compute_network.vpc_network_mgmt.name}"
-    subnetwork = "${google_compute_subnetwork.vpc_network_mgmt_sub.name}"
+    network       = "${var.mgmt_vpc.name}"
+    subnetwork = "${var.mgmt_subnet.name}"
     # network = "${google_compute_network.vpc_network.self_link}"
     access_config {
     }
@@ -178,8 +141,8 @@ resource "google_compute_instance" "vm_instance" {
     network_interface {
     # external
     # A default network is created for all GCP projects
-    network       = "${google_compute_network.vpc_network_ext.name}"
-    subnetwork = "${google_compute_subnetwork.vpc_network_ext_sub.name}"
+    network       = "${var.ext_vpc.name}"
+    subnetwork = "${var.ext_subnet.name}"
     # network = "${google_compute_network.vpc_network.self_link}"
     access_config {
     }
@@ -187,8 +150,8 @@ resource "google_compute_instance" "vm_instance" {
     network_interface {
     # internal
     # A default network is created for all GCP projects
-    network       = "${google_compute_network.vpc_network_int.name}"
-    subnetwork = "${google_compute_subnetwork.vpc_network_int_sub.name}"
+    network       = "${var.int_vpc.name}"
+    subnetwork = "${var.int_subnet.name}"
     # network = "${google_compute_network.vpc_network.self_link}"
     # access_config {
     # }
@@ -197,3 +160,16 @@ resource "google_compute_instance" "vm_instance" {
 # gcloud compute instances describe afm-1-instance --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
 
 #output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.afm-1-instance.access_config[0].natIP}" }
+
+# // A variable for extracting the external ip of the instance
+# output "ip" {
+#  value = "${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}"
+# }
+output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.0.network_interface.0.access_config.0.nat_ip}" }
+
+output "f5vm02_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.0.access_config.0.nat_ip}" }
+
+# // A variable for extracting the external ip of the instance
+# output "ip" {
+#  value = "${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}"
+# }

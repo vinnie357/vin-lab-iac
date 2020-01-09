@@ -1,3 +1,31 @@
+
+# networks
+variable "int_vpc" {
+  
+}
+variable "ext_vpc" {
+  
+}
+variable "mgmt_vpc" {
+  
+}
+variable "mgmt_subnet" {
+  
+}
+variable "int_subnet" {
+  
+}
+variable "ext_subnet" {
+  
+}
+
+
+
+# device
+variable "projectPrefix" {
+  description = "prefix for resources"
+}
+
 variable "name" {
   description = "device name"
   default = "afm"
@@ -22,12 +50,6 @@ variable "vm_count" {
 variable "adminSrcAddr" {
   description = "admin source range in CIDR"
 
-}
-
-variable "gce_ssh_user" {
-  description = "username for ssh key access"
-  default = "xadmin"
-  
 }
 
 variable "gce_ssh_pub_key_file" {

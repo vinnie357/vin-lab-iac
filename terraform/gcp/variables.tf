@@ -47,3 +47,6 @@ variable "adminPass" {
 variable "adminAccount" {
   description = " admin account name"
 }
+variable "projectPrefix" {
+  description = "resource prefix"
+}

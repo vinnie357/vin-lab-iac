@@ -45,4 +45,5 @@ module "gcp" {
     adminSrcAddr = "${var.adminSrcAddr}"
     adminAccount = "${var.adminAccount}"
     adminPass = "${var.adminPass}"
+    projectPrefix = "${var.projectPrefix}"
 }

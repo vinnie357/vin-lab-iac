@@ -1,4 +1,13 @@
 #====================#
+# vinlab             #
+#====================#
+variable "projectPrefix" {
+    description = "prefix for resources"
+    default = "vinlab-"
+}
+
+
+#====================#
 # vCenter connection #
 #====================#
 

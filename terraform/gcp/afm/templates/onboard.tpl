@@ -166,11 +166,21 @@ function checkDO() {
     CNT=0
     while [ $CNT -le 4 ]
     do
-    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.status)
-    if [[ $doStatus == "OK" ]]; then
+    #doStatus=$(curl -i -u $CREDS http://localhost:8100$doCheckUrl | grep HTTP | awk '{print $2}')
+    #doStatus=$$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
+    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.code)
+    if [[ $doStatus == "200" ]]; then
+        #version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .version)
         version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].version)
         echo "Declarative Onboarding $version online "
         break
+    elif [[ $doStatus == "404" ]]; then
+        echo "DO Status $doStatus"
+        bigstart restart restnoded
+        sleep 30
+        bigstart status restnoded | grep running
+        status=$?
+        echo "restnoded:$status"
     else
         echo "DO Status $doStatus"
         CNT=$[$CNT+1]
@@ -183,11 +193,19 @@ function checkAS3() {
     CNT=0
     while [ $CNT -le 4 ]
     do
-    as3Status=$(curl -i -u $CREDS http://localhost:8100$as3CheckUrl | grep HTTP | awk '{print $2}')
+    #as3Status=$(curl -i -u $CREDS http://localhost:8100$as3CheckUrl | grep HTTP | awk '{print $2}')
+    as3Status=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r .code)
     if [[ $as3Status == "200" ]]; then
         version=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r .version)
         echo "As3 $version online "
         break
+    elif [[ $as3Status == "404" ]]; then
+        echo "AS3 Status $as3Status"
+        bigstart restart restnoded
+        sleep 10
+        bigstart status restnoded | grep running
+        status=$?
+        echo "restnoded:$status"
     else
         echo "AS3 Status $as3Status"
         CNT=$[$CNT+1]
@@ -212,10 +230,6 @@ function checkTS() {
     sleep 10
     done
 }
-doStatus=$(checkDO)
-echo "$doStatus"
-as3Status=$(checkAS3)
-echo "$as3Status"
 # tsStatus=$(checkTS)
 # echo "$tsStatus"
 function waitDO() {
@@ -260,6 +274,7 @@ function runDO() {
             FINISHED)
                 # finished
                 echo " $task status: $status "
+                bigstart start dhclient
                 break
                 ;;
             STARTED)
@@ -328,19 +343,27 @@ function runDO() {
     done
 }
 # run DO
-if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
-    echo "running do for 01 in:$deviceId"
-    runDO do1.json
-elif [[ "$doStatus" = *"online"* ]]; then
-    echo "running do for 02 in:$deviceId"
-    runDO do2.json
-else
-    echo "DO not online status: $doStatus"
-fi
-
-as3Status=$(checkAS3)
-echo "$as3Status"
-
+CNT=0
+while true
+    do
+        doStatus=$(checkDO)
+    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+        echo "running do for 01 in:$deviceId"
+        bigstart stop dhclient
+        runDO do1.json
+    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then 
+        echo "running do for 02 in:$deviceId"
+        bigstart stop dhclient
+        runDO do2.json
+    elif [ $CNT -le 6 ]; then
+        echo "Status code: $doStatus  DO not ready yet..."
+        CNT=$[$CNT+1]
+        sleep 30
+    else
+        echo "DO not online status: $doStatus"
+        break
+    fi
+done
 function runAS3 () {
     CNT=0
     while [ $CNT -le 10 ]
@@ -384,21 +407,24 @@ function runAS3 () {
 
 #
 # create logging profiles
+# https://github.com/mikeoleary/f5-sca-securitystack/blob/master/BIG-IP/tmsh/tier3/app/asm/15/deployapp1.sh
 # network profile
 echo "creating log profiles"
-# echo  -e 'create cli transaction;
-tmsh create security log profile local_afm_log ip-intelligence { log-publisher local-db-publisher } network replace-all-with { local_afm_log { filter { log-acl-match-accept enabled log-acl-match-drop enabled log-acl-match-reject enabled log-geo-always enabled log-ip-errors enabled log-tcp-errors enabled log-tcp-events enabled log-translation-fields enabled } publisher local-db-publisher } }
-# submit cli transaction' | tmsh -q
+echo  -e 'create cli transaction;
+create security log profile local_afm_log ip-intelligence { log-publisher local-db-publisher } network replace-all-with { local_afm_log { filter { log-acl-match-accept enabled log-acl-match-drop enabled log-acl-match-reject enabled log-geo-always enabled log-ip-errors enabled log-tcp-errors enabled log-tcp-events enabled log-translation-fields enabled } publisher local-db-publisher } };
+submit cli transaction' | tmsh -q
 #
 # asm profile
-# echo  -e 'create cli transaction;
-tmsh create security log profile local_sec_log application replace-all-with { local_sec_log { filter replace-all-with { log-challenge-failure-requests { values replace-all-with { enabled } } request-type { values replace-all-with { all } } } response-logging illegal } } bot-defense replace-all-with { local_sec_log { filter { log-alarm enabled log-block enabled log-browser enabled log-browser-verification-action enabled log-captcha enabled log-challenge-failure-request enabled log-device-id-collection-request enabled log-honey-pot-page enabled log-malicious-bot enabled log-mobile-application enabled log-none enabled log-rate-limit enabled log-redirect-to-pool enabled log-suspicious-browser enabled log-tcp-reset enabled log-trusted-bot enabled log-unknown enabled log-untrusted-bot enabled } local-publisher /Common/local-db-publisher } };
-# submit cli transaction' | tmsh -q
+echo  -e 'create cli transaction;
+create security log profile local_sec_log application replace-all-with { local_sec_log { filter replace-all-with { log-challenge-failure-requests { values replace-all-with { enabled } } request-type { values replace-all-with { all } } } response-logging illegal } } bot-defense replace-all-with { local_sec_log { filter { log-alarm enabled log-block enabled log-browser enabled log-browser-verification-action enabled log-captcha enabled log-challenge-failure-request enabled log-device-id-collection-request enabled log-honey-pot-page enabled log-malicious-bot enabled log-mobile-application enabled log-none enabled log-rate-limit enabled log-redirect-to-pool enabled log-suspicious-browser enabled log-tcp-reset enabled log-trusted-bot enabled log-unknown enabled log-untrusted-bot enabled } local-publisher /Common/local-db-publisher } };
+submit cli transaction' | tmsh -q
 echo "done creating log profiles"
 # run as3
 CNT=0
 while true
 do
+    as3Status=$(checkAS3)
+    echo "AS3 check status: $as3Status"
     if [[ $as3Status == *"online"* ]]; then
         echo "running as3"
         runAS3
