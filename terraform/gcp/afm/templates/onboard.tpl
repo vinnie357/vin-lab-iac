@@ -167,8 +167,14 @@ function checkDO() {
     while [ $CNT -le 4 ]
     do
     #doStatus=$(curl -i -u $CREDS http://localhost:8100$doCheckUrl | grep HTTP | awk '{print $2}')
-    #doStatus=$$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
-    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.code)
+    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq .code)
+    if [ $? == 1 ]; then
+        doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
+    fi
+    if [ $? == 1 ]; then
+        doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.code)
+    fi
+    echo "status $doStatus"
     if [[ $doStatus == "200" ]]; then
         #version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .version)
         version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].version)
