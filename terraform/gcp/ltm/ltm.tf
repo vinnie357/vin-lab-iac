@@ -7,8 +7,8 @@ locals {
   int_gw     = "${var.int_subnet.gateway_address}"
 }
 # firewall
-resource "google_compute_firewall" "mgmt" {
-  name    = "${var.projectPrefix}mgmt-firewall"
+resource "google_compute_firewall" "ltm-mgmt" {
+  name    = "${var.projectPrefix}ltm-mgmt-firewall"
   network = "${var.mgmt_vpc.name}"
 
   allow {
@@ -22,8 +22,8 @@ resource "google_compute_firewall" "mgmt" {
 
   source_ranges = ["${var.adminSrcAddr}"]
 }
-resource "google_compute_firewall" "app" {
-  name    = "${var.projectPrefix}app-firewall"
+resource "google_compute_firewall" "ltm-app" {
+  name    = "${var.projectPrefix}ltm-app-firewall"
   network = "${var.ext_vpc.name}"
 
   allow {
@@ -112,7 +112,7 @@ data "template_file" "as3_json" {
 
 
 # bigips
-resource "google_compute_instance" "vm_instance" {
+resource "google_compute_instance" "ltm_instance" {
   count            = "${var.vm_count}"
   name             = "${var.projectPrefix}${var.name}-${count.index + 1}-instance"
   machine_type = "${var.bigipMachineType}"
@@ -128,7 +128,7 @@ resource "google_compute_instance" "vm_instance" {
     #startup-script = "${data.template_file.vm_onboard.rendered}"
     deviceId = "${count.index + 1}"
  }
-  metadata_startup_script = "${data.template_file.vm_onboard.rendered}"
+#   metadata_startup_script = "${data.template_file.vm_onboard.rendered}"
 
   network_interface {
     # mgmt
@@ -158,9 +158,9 @@ resource "google_compute_instance" "vm_instance" {
     # }
   }
 }
-# gcloud compute instances describe afm-1-instance --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+# gcloud compute instances describe ltm-1-instance --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
 
-#output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.afm-1-instance.access_config[0].natIP}" }
+#output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.ltm-1-instance.access_config[0].natIP}" }
 
 # // A variable for extracting the external ip of the instance
 # output "ip" {
@@ -168,7 +168,7 @@ resource "google_compute_instance" "vm_instance" {
 # }
 output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.0.network_interface.0.access_config.0.nat_ip}" }
 
-output "f5vm02_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.0.access_config.0.nat_ip}" }
+#output "f5vm02_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.0.access_config.0.nat_ip}" }
 
 # // A variable for extracting the external ip of the instance
 # output "ip" {

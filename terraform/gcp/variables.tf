@@ -22,7 +22,7 @@ variable "appName" {
 
 variable "prefix" {
   description = "prefix for object names"
-  default = "afm"
+  default = "vinlab"
 }
 
 # creds

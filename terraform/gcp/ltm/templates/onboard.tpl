@@ -1,12 +1,5 @@
 #!/bin/bash
 #
-startTime=$(date +%s)
-echo "timestamp start: $(date)"
-function timer () {
-    echo "Time Elapsed: $(( ${1} / 3600 ))h $(( (${1} / 60) % 60 ))m $(( ${1} % 60 ))s"
-}
-#
-deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
 # logging
 LOG_FILE=${onboard_log}
 if [ ! -e $LOG_FILE ]
@@ -20,6 +13,15 @@ fi
 
 exec 1>$LOG_FILE 2>&1
 
+startTime=$(date +%s)
+echo "timestamp start: $(date)"
+function timer () {
+    echo "Time Elapsed: $(( ${1} / 3600 ))h $(( (${1} / 60) % 60 ))m $(( ${1} % 60 ))s"
+}
+#
+deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
+
+# wait for mcpd
 echo  "wait for mcpd"
 checks=0
 while [[ "$checks" -lt 120 ]]; do 
