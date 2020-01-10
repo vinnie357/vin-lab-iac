@@ -35,7 +35,8 @@
             "class": "Provision",
             "ltm": "nominal",
             "asm": "nominal",
-            "afm": "nominal"
+            "afm": "nominal",
+            "avr": "nominal"
         },
         "external": {
             "class": "VLAN",
@@ -48,20 +49,30 @@
                 }
             ]
         },
+        "internal": {
+            "class": "VLAN",
+            "tag": 4093,
+            "mtu": 1500,
+            "interfaces": [
+                {
+                    "name": "1.2",
+                    "tagged": false
+                }
+            ]
+        },
         "external-self": {
             "class": "SelfIp",
-            "address": "${local_selfip}/24",
+            "address": "${local_ext_selfip}/24",
             "vlan": "external",
-            "allowService": "default",
+            "allowService": "none",
             "trafficGroup": "traffic-group-local-only"
         },
-        "configsync": {
-            "class": "ConfigSync",
-            "configsyncIp": "/Common/external-self/address"
-        },
-        "failoverAddress": {
-            "class": "FailoverUnicast",
-            "address": "/Common/external-self/address"
+        "internal-self": {
+            "class": "SelfIp",
+            "address": "${local_int_selfip}/24",
+            "vlan": "internal",
+            "allowService": "default",
+            "trafficGroup": "traffic-group-local-only"
         }
     }
 }

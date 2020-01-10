@@ -26,6 +26,16 @@ while [[ "$checks" -lt 120 ]]; do
    let checks=checks+1
    sleep 10
 done 
+
+function delay () {
+# $1 count #2 item
+count=0
+while [[ $count  -lt $1 ]]; do 
+    echo "still working... $2"
+    sleep 1
+    count=$[$count+1]
+done
+}
 #
 #
 # create admin account and password
@@ -64,7 +74,7 @@ rpmFilePath="/var/config/rest/downloads"
 # do
 doUrl="/mgmt/shared/declarative-onboarding"
 doCheckUrl="/mgmt/shared/declarative-onboarding/info"
-doTaskUrl="/shared/declarative-onboarding/task"
+doTaskUrl="mgmt/shared/declarative-onboarding/task"
 # as3
 as3Url="/mgmt/shared/appsvcs/declare"
 as3CheckUrl="/mgmt/shared/appsvcs/info"
@@ -88,16 +98,16 @@ AS3_URL_POST="/mgmt/shared/appsvcs/declare"
 # BIG-IPS ONBOARD SCRIPT
 #
 # CHECK TO SEE NETWORK IS READY
-CNT=0
+count=0
 while true
 do
   STATUS=$(curl -s -k -I example.com | grep HTTP)
   if [[ $STATUS == *"200"* ]]; then
-    echo "Got 200! VE is Ready!"
+    echo "internet access check passed"
     break
-  elif [ $CNT -le 6 ]; then
+  elif [ $count -le 6 ]; then
     echo "Status code: $STATUS  Not done yet..."
-    CNT=$[$CNT+1]
+    count=$[$count+1]
   else
     echo "GIVE UP..."
     break
@@ -116,6 +126,8 @@ do
     do
     echo "download: $file"
     name=$(basename $file )
+    # make download dir
+    mkdir -p /var/config/rest/downloads
     result=$(/usr/bin/curl -Lsk  $file -o /var/config/rest/downloads/$name)
     done
 done
@@ -126,8 +138,31 @@ for rpm in $rpms
 do
   filename=$(basename $rpm)
   echo "installing $filename"
-  postBody="{\"operation\":\"INSTALL\",\"packageFilePath\":\"$rpmFilePath/$filename\"}"
-  install=$(restcurl -u $CREDS -X POST -d $postBody $rpmInstallUrl | jq -r .id )
+  if [ -f $rpmFilePath/$filename ]; then
+     postBody="{\"operation\":\"INSTALL\",\"packageFilePath\":\"$rpmFilePath/$filename\"}"
+     while true
+     do
+        iappApiStatus=$(curl -i -u $CREDS  http://localhost:8100$rpmInstallUrl | grep HTTP | awk '{print $2}')
+        case $iappApiStatus in 
+            404)
+                echo "api not ready status: $iappApiStatus"
+                sleep 2
+                ;;
+            200)
+                echo "api ready starting install task $filename"
+                install=$(restcurl -u $CREDS -X POST -d $postBody $rpmInstallUrl | jq -r .id )
+                break
+                ;;
+              *)
+                echo "other error status: $iappApiStatus"
+                debug=$(restcurl -u $CREDS $rpmInstallUrl)
+                echo "ipp install debug: $debug"
+                ;;
+        esac
+    done
+  else
+    echo " file: $filename not found"
+  fi 
   while true
   do
     status=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq -r .status)
@@ -153,9 +188,8 @@ do
             ;;
         *)
             # other
-            debug=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq .)
+            debug=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq . )
             echo "failed $filename task: $install error: $debug"
-            break
             ;;
         esac
     sleep 2
@@ -163,8 +197,8 @@ do
 done
 function checkDO() {
     # Check DO Ready
-    CNT=0
-    while [ $CNT -le 4 ]
+    count=0
+    while [ $count -le 4 ]
     do
     #doStatus=$(curl -i -u $CREDS http://localhost:8100$doCheckUrl | grep HTTP | awk '{print $2}')
     doStatusType=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r type )
@@ -193,18 +227,24 @@ function checkDO() {
         echo "restnoded:$status"
     else
         echo "DO Status $doStatus"
-        CNT=$[$CNT+1]
+        count=$[$count+1]
     fi
     sleep 10
     done
 }
 function checkAS3() {
     # Check AS3 Ready
-    CNT=0
-    while [ $CNT -le 4 ]
+    count=0
+    while [ $count -le 4 ]
     do
     #as3Status=$(curl -i -u $CREDS http://localhost:8100$as3CheckUrl | grep HTTP | awk '{print $2}')
     as3Status=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r .code)
+    if  [ "$as3Status" == "null" ] || [ -z "$as3Status" ]; then
+        type=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r type )
+        if [ "$type" == "object" ]; then
+            as3Status="200"
+        fi
+    fi
     if [[ $as3Status == "200" ]]; then
         version=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r .version)
         echo "As3 $version online "
@@ -218,15 +258,15 @@ function checkAS3() {
         echo "restnoded:$status"
     else
         echo "AS3 Status $as3Status"
-        CNT=$[$CNT+1]
+        count=$[$count+1]
     fi
     sleep 10
     done
 }
 function checkTS() {
     # Check TS Ready
-    CNT=0
-    while [ $CNT -le 4 ]
+    count=0
+    while [ $count -le 4 ]
     do
     tsStatus=$(curl -i -u $CREDS http://localhost:8100$tsCheckUrl | grep HTTP | awk '{print $2}')
     if [[ $tsStatus == "200" ]]; then
@@ -235,7 +275,7 @@ function checkTS() {
         break
     else
         echo "TS Status $tsStatus"
-        CNT=$[$CNT+1]
+        count=$[$count+1]
     fi
     sleep 10
     done
@@ -243,139 +283,161 @@ function checkTS() {
 # tsStatus=$(checkTS)
 # echo "$tsStatus"
 function waitDO() {
-        CNT=0
-        while [ $CNT -le 4 ]
+        count=0
+        while [ $count -le 4 ]
             do
-            status=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
+            status=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
             echo "waiting... $task status: $status"
             if [ $status == "FINISHED" ]; then
                 echo "FINISHED"
                 break
             elif [ $status == "RUNNING" ]; then
                 echo "Status: $status  Still Waiting..."
-                sleep 30
-                CNT=$[$CNT+1]
+                delay 30 $task
+                count=$[$count+1]
             elif [ $status == "OK" ]; then
                 echo "OK"
                 break
             else
-                echo "OTHER"
-                break
+                code=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .code)
+                echo "wating..OTHER:$status code:$code"
+                count=$[$count+1]
+                sleep 30
             fi
         done
 }
 function runDO() {
-    CNT=0
-    while [ $CNT -le 10 ]
+    count=0
+    while [ $count -le 4 ]
         do 
         # make task
         task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100/mgmt/shared/declarative-onboarding -d @/config/$1 | jq -r .id)
-        echo "starting task: $task"
+        echo "starting DO task: $task"
         sleep 1
+        count=$[$count+1]
         # check task code
-        code=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .code)
-        sleep 1
-        if  [ "$code" == "null" ] || [ -z "$code" ]; then
+        while true
+        do
+            code=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .code)
             sleep 1
-            status=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
-            sleep 1
-            #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
-            case $status in 
-            FINISHED)
-                # finished
-                echo " $task status: $status "
-                bigstart start dhclient
-                break
-                ;;
-            STARTED)
-                # started
-                echo " $filename status: $status "
-                sleep 20
-                ;;
-            RUNNING)
-                # running
-                echo "DO status: $status $task"
-                CNT=$[$CNT+1]
-                sleep 60
-                status=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
-                if [ $status == "FINISHED" ]; then
-                    echo "do done for $task for $1"
+            if  [ "$code" == "null" ] || [ -z "$code" ]; then
+                sleep 1
+                status=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                sleep 1
+                #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
+                case $status in 
+                FINISHED)
+                    # finished
+                    echo " $task status: $status "
+                    # bigstart start dhclient
                     break
-                elif [ $status == "RUNNING" ]; then
-                    echo "Status: $status  Not done yet..."
-                    sleep 120
-                    waitStatus=$(waitDO)
-                    if [ $waitStatus == "FINISHED" ]; then
-                        break
-                    else
-                        echo "wait result: $waitStatus"
-                    fi
-                elif [ $status == "OK" ]; then
-                    echo "Done Status code: $status  No change $task"
+                    ;;
+                STARTED)
+                    # started
+                    echo " $filename status: $status "
+                    sleep 30
+                    ;;
+                RUNNING)
+                    # running
+                    echo "DO Status: $status task: $task Not done yet..."
+                    sleep 30
+                    # count=$[$count+1]
+                    # delay 150 $task
+                    # status=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    # if [ $status == "FINISHED" ]; then
+                    #     echo "do done for $task for $1"
+                    #     break
+                    # elif [ "$status" == "RUNNING" ]; then
+                    #     echo "DO Status: $status task:$task Not done yet..."
+                    #     #delay 300 $task
+                    #     #waitDO
+                    # elif [ "$status" == "OK" ]; then
+                    #     echo "Done Status code: $status  No change $task"
+                    #     break
+                    # elif [ "$status" == "ROLLING_BACK" ]; then
+                    #     echo "Failed: $status  Check declaration $task"
+                    #     #count=$[$count+1]
+                    # else
+                    #     echo "other $status task:$task"
+                    #     debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq . )
+                    #     echo "run do debug:$debug"
+                    #     #count=$[$count+1]
+                    # fi 
+                    ;;
+                FAILED)
+                    # failed
+                    error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    echo "failed $task, $error"
+                    #count=$[$count+1]
                     break
-                elif [ $status == "ROLLING_BACK" ]; then
-                    echo "Failed ROLLING_BACK: $status  Check declaration $task"
+                    ;;
+                ERROR)
+                    # error
+                    error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    echo "Error $task, $error"
+                    #count=$[$count+1]
                     break
-                else
-                    echo "other $status"
-                    CNT=$[$CNT+1]
-                fi 
-                ;;
-            FAILED)
-                # failed
-                error=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
-                echo "failed $task, $error"
-                CNT=$[$CNT+1]
-                ;;
-            ERROR)
-                # error
-                error=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
-                echo "Error $task, $error"
-                CNT=$[$CNT+1]
-                ;;
-            ROLLING_BACK)
-                # Rolling back
-                echo "Rolling back failed status: $status"
-                break
-                ;;
-            OK)
-                # complete no change
-                echo "Complete no change status: $status"
-                break
-                ;;
-            *)
-                # other
-                echo "other: $status"
-                debug=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq .)
-                echo "debug: $debug"
-                error=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
-                echo "Other $task, $error"
-                CNT=$[$CNT+1]
-                sleep 60
-                ;;
-            esac
-        else
-            echo "DO code: $code"
-            CNT=$[$CNT+1]
-        fi
+                    ;;
+                ROLLING_BACK)
+                    # Rolling back
+                    echo "Rolling back failed status: $status task: $task"
+                    break
+                    ;;
+                OK)
+                    # complete no change
+                    echo "Complete no change status: $status task: $task"
+                    break
+                    ;;
+                *)
+                    # other
+                    echo "other: $status"
+                    debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq .)
+                    echo "debug: $debug"
+                    error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    echo "Other $task, $error"
+                    # count=$[$count+1]
+                    sleep 30
+                    ;;
+                esac
+            else
+                echo "DO status code: $code"
+                debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq .)
+                echo "debug do code: $debug"
+                # count=$[$count+1]
+            fi
+        done
     done
 }
 # run DO
-CNT=0
-while true
+count=0
+while [ $count -le 4 ]
     do
         doStatus=$(checkDO)
     if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
-        echo "running do for 01 in:$deviceId"
+        echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do1.json
+        if [ "$?" == 0 ]; then
+            echo "done with do"
+            bigstart start dhclient
+            results=$(restcurl -u $CREDS -X GET $doTaskUrl | jq '.[] | .id, .result')
+            echo "do results: $results"
+            break
+        fi
     elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then 
-        echo "running do for 02 in:$deviceId"
+        echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do2.json
-    elif [ $CNT -le 6 ]; then
+        if [ "$?" == 0 ]; then
+            echo "done with do"
+            bigstart start dhclient
+            results=$(restcurl -u $CREDS -X GET $doTaskUrl | jq '.[] | .id, .result')
+            echo "do results: $results"
+            break
+        fi
+    elif [ $count -le 2 ]; then
         echo "Status code: $doStatus  DO not ready yet..."
-        CNT=$[$CNT+1]
+        count=$[$count+1]
         sleep 30
     else
         echo "DO not online status: $doStatus"
@@ -383,43 +445,55 @@ while true
     fi
 done
 function runAS3 () {
-    CNT=0
-    while [ $CNT -le 10 ]
+    count=0
+    while [ $count -le 2 ]
         do
-        echo "running as3"
-        task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100$as3Url?async=true -d @/config/as3.json | jq -r .id)
-        status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
-        case $status in
-        no*change)
-            # finished
-            echo " $task status: $status "
-            break
-            ;;
-        in*progress)
-            # in progress
-            echo "Running: $task status: $status "
-            sleep 60
+            # make task
+            task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100$as3Url?async=true -d @/config/as3.json | jq -r .id)
+            echo "starting as3 task: $task"
+            sleep 1
+            count=$[$count+1]
+            # check task code
+        while true
+        do
             status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
-            if [[ $status == * ]]; then
-                echo "status: $status"
+            case $status in
+            success)
+                # successful!
+                echo " $task status: $status "
                 break
-            fi
-            ;;
-        Error*)
-            # error
-            echo "Error: $task status: $status "
-            ;;
-        
-        *)
-            # other
-            echo "status: $status"
-            debug=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq .)
-            echo "debug: $debug"
-            error=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
-            echo "Other: $task, $error"
-            CNT=$[$CNT+1]
-            ;;
-        esac
+                ;;
+            no*change)
+                # finished
+                echo " $task status: $status "
+                break
+                ;;
+            in*progress)
+                # in progress
+                echo "Running: $task status: $status "
+                sleep 60
+                status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
+                if [[ $status == * ]]; then
+                    echo "status: $status"
+                    break
+                fi
+                ;;
+            Error*)
+                # error
+                echo "Error: $task status: $status "
+                ;;
+            
+            *)
+                # other
+                echo "status: $status"
+                debug=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq .)
+                echo "debug: $debug"
+                error=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
+                echo "Other: $task, $error"
+                count=$[$count+1]
+                ;;
+            esac
+        done
     done
 }
 
@@ -438,8 +512,8 @@ create security log profile local_sec_log application replace-all-with { local_s
 submit cli transaction' | tmsh -q
 echo "done creating log profiles"
 # run as3
-CNT=0
-while true
+count=0
+while [ $count -le 4 ]
 do
     as3Status=$(checkAS3)
     echo "AS3 check status: $as3Status"
@@ -447,11 +521,11 @@ do
         echo "running as3"
         runAS3
         break
-    elif [ $CNT -le 6 ]; then
+    elif [ $count -le 2 ]; then
         echo "Status code: $as3Status  As3 not ready yet..."
-        CNT=$[$CNT+1]
+        count=$[$count+1]
     else
-        echo "Status $as3Status"
+        echo "As3 API Status $as3Status"
         break
     fi
 done
