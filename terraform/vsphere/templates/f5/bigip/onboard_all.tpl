@@ -6,7 +6,8 @@ function timer () {
     echo "Time Elapsed: $(( ${1} / 3600 ))h $(( (${1} / 60) % 60 ))m $(( ${1} % 60 ))s"
 }
 #
-deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
+#deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
+deviceId=$1
 # logging
 LOG_FILE=${onboard_log}
 if [ ! -e $LOG_FILE ]
@@ -57,7 +58,7 @@ tmsh list auth user $admin_username
 tmsh save sys config
 # copy ssh key
 mkdir -p /home/$admin_username/.ssh/
-cp /home/admin/.ssh/authorized_keys /home/$admin_username/.ssh/authorized_keys
+cp /home/admin/.ssh/authorized_keys /home/xadmin/.ssh/authorized_keys
 echo " admin account changed"
 # change admin password only
 # echo "change admin password"
@@ -81,7 +82,7 @@ rpmFilePath="/var/config/rest/downloads"
 # do
 doUrl="/mgmt/shared/declarative-onboarding"
 doCheckUrl="/mgmt/shared/declarative-onboarding/info"
-doTaskUrl="/mgmt/shared/declarative-onboarding/task"
+doTaskUrl="mgmt/shared/declarative-onboarding/task"
 # as3
 as3Url="/mgmt/shared/appsvcs/declare"
 as3CheckUrl="/mgmt/shared/appsvcs/info"
@@ -202,20 +203,6 @@ do
     sleep 2
     done
 done
-
-function getDoStatus() {
-    task=$1
-    doStatusType=$(restcurl -u $CREDS -X GET $doTaskUrl/$task | jq -r type )
-    if [ "$doStatusType" == "object" ]; then
-        doStatus=$(restcurl -u $CREDS -X GET $doTaskUrl/$task | jq -r .result.status)
-        echo $doStatus
-    elif [ "$doStatusType" == "array" ]; then
-        doStatus=$(restcurl -u $CREDS -X GET $doTaskUrl/$task | jq -r .[].result.status)
-        echo $doStatus
-    else
-        echo "unknown type:$doStatusType"
-    fi
-}
 function checkDO() {
     # Check DO Ready
     count=0
@@ -308,29 +295,24 @@ function runDO() {
     while [ $count -le 4 ]
         do 
         # make task
-        task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100$doUrl -d @/config/$1 | jq -r .id)
-        taskId=$(echo $task)
-        echo "starting DO task: $taskId"
+        task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100/mgmt/shared/declarative-onboarding -d @/config/$1 | jq -r .id)
+        echo "starting DO task: $task"
         sleep 1
         count=$[$count+1]
         # check task code
         while true
         do
-            code=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .code)
+            code=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .code)
             sleep 1
             if  [ "$code" == "null" ] || [ -z "$code" ]; then
-                status=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
                 sleep 1
-                # 200,202,422
-                echo "DO: $task response:$code"
-                sleep 1
-                status=$(getDoStatus $taskId)
+                status=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
                 sleep 1
                 #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
                 case $status in 
                 FINISHED)
                     # finished
-                    echo " $taskId status: $status "
+                    echo " $task status: $status "
                     # bigstart start dhclient
                     break 2
                     ;;
@@ -341,47 +323,47 @@ function runDO() {
                     ;;
                 RUNNING)
                     # running
-                    echo "DO Status: $status task: $taskId Not done yet..."
+                    echo "DO Status: $status task: $task Not done yet..."
                     sleep 30
                     ;;
                 FAILED)
                     # failed
-                    error=$(getDoStatus $taskId)
-                    echo "failed $taskId, $error"
+                    error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    echo "failed $task, $error"
                     #count=$[$count+1]
                     break
                     ;;
                 ERROR)
                     # error
-                    error=$(getDoStatus $taskId)
-                    echo "Error $taskId, $error"
+                    error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    echo "Error $task, $error"
                     #count=$[$count+1]
                     break
                     ;;
                 ROLLING_BACK)
                     # Rolling back
-                    echo "Rolling back failed status: $status task: $taskId"
+                    echo "Rolling back failed status: $status task: $task"
                     break
                     ;;
                 OK)
                     # complete no change
-                    echo "Complete no change status: $status task: $taskId"
+                    echo "Complete no change status: $status task: $task"
                     break 2
                     ;;
                 *)
                     # other
                     echo "other: $status"
-                    debug=$(restcurl -u $CREDS $doTaskUrl/$taskId | jq .)
+                    debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq .)
                     echo "debug: $debug"
-                    error=$(getDoStatus $taskId)
-                    echo "Other $taskId, $error"
+                    error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    echo "Other $task, $error"
                     # count=$[$count+1]
                     sleep 30
                     ;;
                 esac
             else
                 echo "DO status code: $code"
-                debug=$(restcurl -u $CREDS $doTaskUrl/$taskId | jq .)
+                debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq .)
                 echo "debug do code: $debug"
                 # count=$[$count+1]
             fi
@@ -393,7 +375,6 @@ count=0
 while [ $count -le 4 ]
     do
         doStatus=$(checkDO)
-        echo "DO check status: $doStatus"
     if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
         echo "running do for id:$deviceId"
         bigstart stop dhclient
@@ -431,42 +412,41 @@ function runAS3 () {
         do
             # make task
             task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100$as3Url?async=true -d @/config/as3.json | jq -r .id)
-            taskId=$(echo $task)
-            echo "starting as3 task: $taskId"
+            echo "starting as3 task: $task"
             sleep 1
             count=$[$count+1]
             # check task code
         while true
         do
-            status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$taskId | jq -r '.results[].message')
+            status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
             case $status in
             *success*)
                 # successful!
-                echo " $taskId status: $status "
+                echo " $task status: $status "
                 break 3
                 ;;
             no*change)
                 # finished
-                echo " $taskId status: $status "
+                echo " $task status: $status "
                 break 3
                 ;;
             in*progress)
                 # in progress
-                echo "Running: $taskId status: $status "
+                echo "Running: $task status: $status "
                 sleep 60
                 ;;
             Error*)
                 # error
-                echo "Error: $taskId status: $status "
+                echo "Error: $task status: $status "
                 ;;
             
             *)
             # other
             echo "status: $status"
-            debug=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$taskId | jq .)
+            debug=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq .)
             echo "debug: $debug"
-            error=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$taskId | jq -r '.results[].message')
-            echo "Other: $taskId, $error"
+            error=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task | jq -r '.results[].message')
+            echo "Other: $task, $error"
             ;;
             esac
         done
@@ -487,62 +467,7 @@ echo  -e 'create cli transaction;
 create security log profile local_sec_log application replace-all-with { local_sec_log { filter replace-all-with { log-challenge-failure-requests { values replace-all-with { enabled } } request-type { values replace-all-with { all } } } response-logging illegal } } bot-defense replace-all-with { local_sec_log { filter { log-alarm enabled log-block enabled log-browser enabled log-browser-verification-action enabled log-captcha enabled log-challenge-failure-request enabled log-device-id-collection-request enabled log-honey-pot-page enabled log-malicious-bot enabled log-mobile-application enabled log-none enabled log-rate-limit enabled log-redirect-to-pool enabled log-suspicious-browser enabled log-tcp-reset enabled log-trusted-bot enabled log-unknown enabled log-untrusted-bot enabled } local-publisher /Common/local-db-publisher } };
 submit cli transaction' | tmsh -q
 echo "done creating log profiles"
-# network
-MGMTADDRESS=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip' -H 'Metadata-Flavor: Google')
-MGMTMASK=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/subnetmask' -H 'Metadata-Flavor: Google')
-MGMTGATEWAY=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/gateway' -H 'Metadata-Flavor: Google')
-
-INT2ADDRESS=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/1/ip' -H 'Metadata-Flavor: Google')
-INT2MASK=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/1/subnetmask' -H 'Metadata-Flavor: Google')
-INT2GATEWAY=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/1/gateway' -H 'Metadata-Flavor: Google')
-
-INT3ADDRESS=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/2/ip' -H 'Metadata-Flavor: Google')
-INT3MASK=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/2/subnetmask' -H 'Metadata-Flavor: Google')
-INT3GATEWAY=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/2/gateway' -H 'Metadata-Flavor: Google')
-
-MGMTNETWORK=$(/bin/ipcalc -n $MGMTADDRESS $MGMTMASK | cut -d= -f2)
-INT2NETWORK=$(/bin/ipcalc -n $INT2ADDRESS $INT2MASK | cut -d= -f2)
-INT3NETWORK=$(/bin/ipcalc -n $INT3ADDRESS $INT3MASK | cut -d= -f2)
-# mgmt
-echo " mgmt"
-echo "$MGMTADDRESS,$MGMTMASK,$MGMTGATEWAY"
-echo "external"
-echo "$INT2ADDRESS,$INT2MASK,$INT2GATEWAY"
-echo "internal"
-echo "$INT3ADDRESS,$INT3MASK,$INT3GATEWAY"
-echo "cidr"
-echo "$MGMTNETWORK"
-echo "$INT2NETWORK"
-echo "$INT3NETWORK"
-
-# delete sys management-route all;
-# delete sys management-ip all;
-# create sys management-ip $MGMTADDRESS/32;
-# create sys management-route mgmt_gw network $MGMTGATEWAY/32 type interface;
-# create sys management-route mgmt_net network $MGMTNETWORK/$MGMTMASK gateway $MGMTGATEWAY;
-# create sys management-route default gateway $MGMTGATEWAY;
-# mgmt
-echo  -e "create cli transaction;
-modify sys global-settings mgmt-dhcp disabled;
-delete sys management-ip all;
-create sys management-ip $MGMTADDRESS/32;
-submit cli transaction" | tmsh -q
-# networks
-echo  -e "create cli transaction;
-create net vlan external interfaces add { 1.1 } mtu 1460;
-create net self external-self address $INT2ADDRESS/32 vlan external;
-create net route ext_gw_interface network $INT2GATEWAY/32 interface external;
-create net route ext_rt network $INT2NETWORK/$INT2MASK gw $INT2GATEWAY;
-create net route default gw $INT2GATEWAY;
-create net vlan internal interfaces add { 1.2 } mtu 1460;
-create net self internal-self address $INT3ADDRESS/32 vlan internal allow-service default;
-create net route int_gw_interface network $INT3GATEWAY/32 interface internal;
-create net route int_rt network $INT3NETWORK/$INT3MASK gw $INT3GATEWAY;
-submit cli transaction" | tmsh -q
-tmsh save /sys config
-echo "done creating tmsh networking"
-
-#  run as3
+# run as3
 count=0
 while [ $count -le 4 ]
 do

@@ -2,6 +2,7 @@ vault.yaml
 .env_vars_helper.sh
 *.ova
 *.ovf
+do.json
 vinlab.vmware.yml
 creds.auto.tfvars
 controller-installer-2.9.0.tar.gz

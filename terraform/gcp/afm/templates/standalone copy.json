@@ -60,32 +60,10 @@
                 }
             ]
         },
-        "external-self": {
-            "class": "SelfIp",
-            "address": "${local_ext_selfip}/32",
-            "vlan": "external",
-            "allowService": "none",
-            "trafficGroup": "traffic-group-local-only"
-        },
-        "internal-self": {
-            "class": "SelfIp",
-            "address": "${local_int_selfip}/32",
-            "vlan": "internal",
-            "allowService": "default",
-            "trafficGroup": "traffic-group-local-only"
-        },
-        "configsync": {
-            "class": "ConfigSync",
-            "configsyncIp": "/Common/internal-self/address"
-        },
-        "failoverAddress": {
-            "class": "FailoverUnicast",
-            "address": "/Common/internal-self/address"
-        },
         "route-internal": {
             "class": "Route",
             "gw": "10.0.20.1",
-            "network": "10.0.20.0/32",
+            "network": "10.0.20.0/24",
             "mtu": 1460
         },
         "route-external": {
@@ -100,27 +78,19 @@
             "network": "default",
             "mtu": 1460
         },
-        "failoverGroup": {
-            "class": "DeviceGroup",
-            "type": "sync-failover",
-            "members": [
-                "${host1}.example.com",
-                "${host2}.example.com"
-            ],
-            "owner": "/Common/failoverGroup/members/0",
-            "autoSync": true,
-            "saveOnAutoSync": false,
-            "networkFailover": true,
-            "fullLoadOnSync": false,
-            "asmSync": false
+        "external-self": {
+            "class": "SelfIp",
+            "address": "${local_ext_selfip}/32",
+            "vlan": "external",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-local-only"
         },
-        "trust": {
-            "class": "DeviceTrust",
-            "localUsername": "${admin_user}",
-            "localPassword": "${admin_password}",
-            "remoteHost": "${remote_selfip}",
-            "remoteUsername": "${admin_user}",
-            "remotePassword": "${admin_password}"
+        "internal-self": {
+            "class": "SelfIp",
+            "address": "${local_int_selfip}/32",
+            "vlan": "internal",
+            "allowService": "default",
+            "trafficGroup": "traffic-group-local-only"
         }
     }
 }

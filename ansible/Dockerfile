@@ -47,13 +47,14 @@ RUN set -ex \
         && ansible-galaxy install geerlingguy.nfs \
         && ansible-galaxy collection install geerlingguy.k8s \
         && ansible-galaxy install gantsign.helm \
-        && ansible-galaxy install nginxinc.nginx
+        && ansible-galaxy install nginxinc.nginx \
+        && ansible-galaxy install f5devcentral.atc_deploy
 
 #env vars
 ENV ANSIBLE_GATHERING smart
 ENV ANSIBLE_HOST_KEY_CHECKING false
 ENV ANSIBLE_RETRY_FILES_ENABLED false
-# ENV ANSIBLE_ROLES_PATH /etc/ansible/roles/
+ENV ANSIBLE_ROLES_PATH /etc/ansible/roles/
 ENV ANSIBLE_SSH_PIPELINING True
 # ENV PYTHONPATH /ansible/lib
 # ENV PATH /ansible/bin:$PATH

@@ -1,0 +1,659 @@
+# ansible-playbook --vault-password-file scripts/.vault_pass.sh playbooks/afm.yaml
+- hosts: afm
+  become: true
+  vars:
+    admin_username: "{{vault_adminUser}}"
+    admin_password: "{{vault_adminPass}}"
+    doList: "{{ lookup('vars', 'context.do.devices', default=provider.do.devices)}}"
+    as3List: "{{ lookup('vars', 'context.as3.apps', default=provider.as3.apps)}}"
+    doFilePath: "{{ inventory_dir }}/host_vars/{{ inventory_hostname }}/do.json"
+    as3FilePath: "{{ inventory_dir }}/host_vars/{{ inventory_hostname }}/as3.json"
+    provider:
+      server: 192.168.20.111
+      vmIP: '192.168.20.111/24'
+      mgmtGW: 192.168.20.254
+      user: "{{vault_adminUser}}"
+      password: "{{vault_adminPass}}"
+      sshUser: root
+      sshPassword: "{{vault_adminPass}}"
+      validate_certs: no
+      server_port: 443
+      name: "hostname.domain.com"
+      do:
+        devices:
+          - template: "bigip"
+            hostname: "hostname.domain.com"
+            dsc:
+              primary: 
+                host: "hostname.domain.com"
+                ip: "192.168.20.111"
+              secondary: 
+                host: "hostname2.domain.com"
+                ip: "192.168.20.112"
+            licenseKey:
+            network:
+              vlans:
+                internal:
+                  tag: 10
+                  interface: "1.2"
+                  selfipnf: "192.168.3.111/24"
+                  selfipf: "192.168.3.3/24"
+                  tagging: "{{'false'}}"
+                external:
+                  tag: 20
+                  interface: "1.1"
+                  selfipnf: "192.168.1.111/24"
+                  selfipf: "192.168.1.3/24"
+                  tagging: "{{'false'}}"
+                ha:
+                  tag: 30
+                  interface: "1.3"
+                  selfipnf: "192.168.4.111/24"
+                  tagging: "{{'false'}}"
+              routes:
+                default:
+                  gateway: "192.168.2.254"
+            dns:
+              servers: "[\"192.168.2.251\",\"8.8.8.8\"]"
+              search: "[\"vin-lab.com\"]"
+            ntp:
+              servers: "[\"0.pool.ntp.org\",\"1.pool.ntp.org\"]"
+              timezone: "EST"
+            # none,minimal,nominal,dedicated
+            provisioning:
+              avr: "nominal"
+              ltm: "nominal"
+              asm: "none"
+              apm: "nominal"
+              afm: "none"
+  pre_tasks:
+  - name: add dependencies for ATC
+    shell: |
+        #!/bin/bash
+        #
+        startTime=$(date +%s)
+        echo "timestamp start: $(date)"
+        function timer () {
+            echo "Time Elapsed: $(( ${1} / 3600 ))h $(( (${1} / 60) % 60 ))m $(( ${1} % 60 ))s"
+        }
+        #
+        #deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
+        deviceId=$1
+        # logging
+        LOG_FILE="/var/log/startup-script.log"
+        if [ ! -e $LOG_FILE ]
+        then
+            touch $LOG_FILE
+            exec &>>$LOG_FILE
+        else
+            #if file exists, exit as only want to run once
+            echo "onboarding already complete exiting.."
+            exit
+        fi
+
+        exec 1>$LOG_FILE 2>&1
+
+        echo  "wait for mcpd"
+        checks=0
+        while [[ "$checks" -lt 120 ]]; do 
+            echo "checking mcpd"
+            tmsh -a show sys mcp-state field-fmt | grep -q running
+          if [ $? == 0 ]; then
+              echo "mcpd ready"
+              break
+          fi
+          echo "mcpd not ready yet"
+          let checks=checks+1
+          sleep 10
+        done 
+
+        function delay () {
+        # $1 count #2 item
+        count=0
+        while [[ $count  -lt $1 ]]; do 
+            echo "still working... $2"
+            sleep 1
+            count=$[$count+1]
+        done
+        }
+        #
+        #
+        # create admin account and password
+        echo "create admin account"
+        admin_username={{admin_username}}
+        admin_password={{admin_password}}
+        # echo  -e "create cli transaction;
+        tmsh create auth user $admin_username password $admin_password shell bash partition-access add { all-partitions { role admin } };
+        # modify /sys db systemauth.primaryadminuser value $admin_username;
+        # submit cli transaction" | tmsh -q
+        tmsh list auth user $admin_username
+        tmsh save sys config
+        # copy ssh key
+        mkdir -p /home/$admin_username/.ssh/
+        cp /root/.ssh/authorized_keys /home/xadmin/.ssh/authorized_keys
+        echo " admin account changed"
+        # change admin password only
+        # echo "change admin password"
+        # echo "admin:$admin_password" | chpasswd
+        # echo "changed admin password"
+        #
+        # vars
+        #
+        CREDS="$admin_username:$admin_password"
+        atc="f5-declarative-onboarding f5-appsvcs-extension f5-telemetry-streaming"
+        #atc="f5-declarative-onboarding f5-appsvcs-extension"
+        # constants
+        mgmt_port=`tmsh list sys httpd ssl-port | grep ssl-port | sed 's/ssl-port //;s/ //g'`
+        authUrl="/mgmt/shared/authn/login"
+        rpmInstallUrl="/mgmt/shared/iapp/package-management-tasks"
+        rpmFilePath="/var/config/rest/downloads"
+        # do
+        doUrl="/mgmt/shared/declarative-onboarding"
+        doCheckUrl="/mgmt/shared/declarative-onboarding/info"
+        doTaskUrl="mgmt/shared/declarative-onboarding/task"
+        # as3
+        as3Url="/mgmt/shared/appsvcs/declare"
+        as3CheckUrl="/mgmt/shared/appsvcs/info"
+        # ts
+        tsUrl="/mgmt/shared/telemetry/declare"
+        tsCheckUrl="/mgmt/shared/telemetry/info" 
+        DO_URL_POST="/mgmt/shared/declarative-onboarding"
+        AS3_URL_POST="/mgmt/shared/appsvcs/declare"
+        #
+        # BIG-IPS ONBOARD SCRIPT
+        #
+        # CHECK TO SEE NETWORK IS READY
+        count=0
+        while true
+        do
+          STATUS=$(curl -s -k -I example.com | grep HTTP)
+          if [[ $STATUS == *"200"* ]]; then
+            echo "internet access check passed"
+            break
+          elif [ $count -le 6 ]; then
+            echo "Status code: $STATUS  Not done yet..."
+            count=$[$count+1]
+          else
+            echo "GIVE UP..."
+            break
+          fi
+          sleep 10
+        done
+
+        # download latest atc tools
+
+        for tool in $atc
+        do
+            
+            echo "downloading $tool"
+            files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+            for file in $files
+            do
+            echo "download: $file"
+            name=$(basename $file )
+            # make download dir
+            mkdir -p /var/config/rest/downloads
+            result=$(/usr/bin/curl -Lsk  $file -o /var/config/rest/downloads/$name)
+            done
+        done
+
+        # install atc tools
+        rpms=$(find $rpmFilePath -name "*.rpm" -type f)
+        for rpm in $rpms
+        do
+          filename=$(basename $rpm)
+          echo "installing $filename"
+          if [ -f $rpmFilePath/$filename ]; then
+            postBody="{\"operation\":\"INSTALL\",\"packageFilePath\":\"$rpmFilePath/$filename\"}"
+            while true
+            do
+                iappApiStatus=$(curl -i -u $CREDS  http://localhost:8100$rpmInstallUrl | grep HTTP | awk '{print $2}')
+                case $iappApiStatus in 
+                    404)
+                        echo "api not ready status: $iappApiStatus"
+                        sleep 2
+                        ;;
+                    200)
+                        echo "api ready starting install task $filename"
+                        install=$(restcurl -u $CREDS -X POST -d $postBody $rpmInstallUrl | jq -r .id )
+                        break
+                        ;;
+                      *)
+                        echo "other error status: $iappApiStatus"
+                        debug=$(restcurl -u $CREDS $rpmInstallUrl)
+                        echo "ipp install debug: $debug"
+                        ;;
+                esac
+            done
+          else
+            echo " file: $filename not found"
+          fi 
+          while true
+          do
+            status=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq -r .status)
+            case $status in 
+                FINISHED)
+                    # finished
+                    echo " rpm: $filename task: $install status: $status"
+                    break
+                    ;;
+                STARTED)
+                    # started
+                    echo " rpm: $filename task: $install status: $status"
+                    ;;
+                RUNNING)
+                    # running
+                    echo " rpm: $filename task: $install status: $status"
+                    ;;
+                FAILED)
+                    # failed
+                    error=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq .errorMessage)
+                    echo "failed $filename task: $install error: $error"
+                    break
+                    ;;
+                *)
+                    # other
+                    debug=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq . )
+                    echo "failed $filename task: $install error: $debug"
+                    ;;
+                esac
+            sleep 2
+            done
+        done
+        function checkDO() {
+            # Check DO Ready
+            count=0
+            while [ $count -le 4 ]
+            do
+            #doStatus=$(curl -i -u $CREDS http://localhost:8100$doCheckUrl | grep HTTP | awk '{print $2}')
+            doStatusType=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r type )
+            if [ "$doStatusType" == "object" ]; then
+                doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .code)
+                if [ $? == 1 ]; then
+                    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
+                fi
+            elif [ "$doStatusType" == "array" ]; then
+                doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.code)
+            else
+                echo "unknown type:$doStatusType"
+            fi
+            echo "status $doStatus"
+            if [[ $doStatus == "200" ]]; then
+                #version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .version)
+                version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].version)
+                echo "Declarative Onboarding $version online "
+                break
+            elif [[ $doStatus == "404" ]]; then
+                echo "DO Status: $doStatus"
+                bigstart restart restnoded
+                sleep 60
+                bigstart status restnoded | grep running
+                status=$?
+                echo "restnoded:$status"
+            else
+                echo "DO Status $doStatus"
+                count=$[$count+1]
+            fi
+            sleep 10
+            done
+        }
+        function checkAS3() {
+            # Check AS3 Ready
+            count=0
+            while [ $count -le 4 ]
+            do
+            #as3Status=$(curl -i -u $CREDS http://localhost:8100$as3CheckUrl | grep HTTP | awk '{print $2}')
+            as3Status=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r .code)
+            if  [ "$as3Status" == "null" ] || [ -z "$as3Status" ]; then
+                type=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r type )
+                if [ "$type" == "object" ]; then
+                    as3Status="200"
+                fi
+            fi
+            if [[ $as3Status == "200" ]]; then
+                version=$(restcurl -u $CREDS -X GET $as3CheckUrl | jq -r .version)
+                echo "As3 $version online "
+                break
+            elif [[ $as3Status == "404" ]]; then
+                echo "AS3 Status $as3Status"
+                bigstart restart restnoded
+                sleep 60
+                bigstart status restnoded | grep running
+                status=$?
+                echo "restnoded:$status"
+            else
+                echo "AS3 Status $as3Status"
+                count=$[$count+1]
+            fi
+            sleep 10
+            done
+        }
+        function checkTS() {
+            # Check TS Ready
+            count=0
+            while [ $count -le 4 ]
+            do
+            tsStatus=$(curl -i -u $CREDS http://localhost:8100$tsCheckUrl | grep HTTP | awk '{print $2}')
+            if [[ $tsStatus == "200" ]]; then
+                version=$(restcurl -u $CREDS -X GET $tsCheckUrl | jq -r .version)
+                echo "Telemetry Streaming $version online "
+                break
+            else
+                echo "TS Status $tsStatus"
+                count=$[$count+1]
+            fi
+            sleep 10
+            done
+        }
+        checkDO
+        checkAS3
+        checkTS
+        echo "timestamp end: $(date)"
+        echo "setup complete $(timer "$(($(date +%s) - $startTime))")"
+  tasks:
+    # - name: list as3 files
+    #   debug:
+    #     msg: "{{item.name}}"
+    #   loop: "{{ as3List }}"
+  
+    # - name: Create AS3 File
+    #   template:
+    #     src: "{{ item.template}}.j2"
+    #     dest: "{{filePath}}/{{ item.name }}_as3.json"  
+    #     mode: 'preserve'
+    #   delegate_to: localhost
+    #   loop: "{{ as3List }}"
+    # - name: ATC POST DO
+    #   include_role:
+    #     name: f5devcentral.atc_deploy
+    #   vars:
+    #     atc_method: POST
+    #     #atc_declaration_url: https://testurl/as3.json
+    #     # AS3/Device/Telemetry is selected by looking at the class within the file
+    #     atc_declaration_file: "{{doFilePath}}"
+    #     atc_delay: 10
+    #     atc_retries: 5     
+    # # atc_AS3_status, atc_DO_status , atc_TS_status
+    # - debug: var=atc_DO_status
+
+    # - name: ATC POST AS3
+    #   include_role:
+    #     name: f5devcentral.atc_deploy
+    #   vars:
+    #     atc_method: POST
+    #     #atc_declaration_url: https://testurl/as3.json
+    #     # AS3/Device/Telemetry is selected by looking at the class within the file
+    #     atc_declaration_file: "{{as3FilePath}}"
+    #     atc_delay: 10
+    #     atc_retries: 5
+
+    # # atc_AS3_status, atc_DO_status , atc_TS_status
+    # - debug: var=atc_AS3_status
+
+    - name: Create DO File
+      template:
+        src: "bigip_sa_ve_vmware.j2"
+        dest: "{{doFilePath}}"
+        mode: 'preserve'
+      delegate_to: localhost
+      loop: "{{ doList }}"
+#"{{doFilePath}}"
+    - name: ATC POST DO
+      vars:
+          doContent: "{{ lookup('file', doFilePath) }}"
+      shell: |
+        #!/bin/bash
+        #
+        startTime=$(date +%s)
+        echo "timestamp start: $(date)"
+        function timer () {
+            echo "Time Elapsed: $(( ${1} / 3600 ))h $(( (${1} / 60) % 60 ))m $(( ${1} % 60 ))s"
+        }
+        #
+        #deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/deviceId' -H 'Metadata-Flavor: Google')
+        deviceId=1
+        # logging
+        LOG_FILE="/var/log/do-script.log"
+        if [ ! -e $LOG_FILE ]
+        then
+            touch $LOG_FILE
+            exec &>>$LOG_FILE
+        else
+            #if file exists, exit as only want to run once
+            echo "onboarding already complete exiting.."
+            continue
+        fi
+
+        exec 1>$LOG_FILE 2>&1
+
+        echo  "wait for mcpd"
+        checks=0
+        while [[ "$checks" -lt 120 ]]; do 
+            echo "checking mcpd"
+            tmsh -a show sys mcp-state field-fmt | grep -q running
+          if [ $? == 0 ]; then
+              echo "mcpd ready"
+              break
+          fi
+          echo "mcpd not ready yet"
+          let checks=checks+1
+          sleep 10
+        done 
+
+        function delay () {
+        # $1 count #2 item
+        count=0
+        while [[ $count  -lt $1 ]]; do 
+            echo "still working... $2"
+            sleep 1
+            count=$[$count+1]
+        done
+        }
+        #
+        #
+        #
+        # vars
+        #
+        admin_username={{admin_username}}
+        admin_password={{admin_password}}
+        CREDS="$admin_username:$admin_password"
+        atc="f5-declarative-onboarding f5-appsvcs-extension f5-telemetry-streaming"
+        #atc="f5-declarative-onboarding f5-appsvcs-extension"
+        # constants
+        mgmt_port=`tmsh list sys httpd ssl-port | grep ssl-port | sed 's/ssl-port //;s/ //g'`
+        authUrl="/mgmt/shared/authn/login"
+        rpmInstallUrl="/mgmt/shared/iapp/package-management-tasks"
+        rpmFilePath="/var/config/rest/downloads"
+        # do
+        doUrl="/mgmt/shared/declarative-onboarding"
+        doCheckUrl="/mgmt/shared/declarative-onboarding/info"
+        doTaskUrl="mgmt/shared/declarative-onboarding/task"
+        # as3
+        as3Url="/mgmt/shared/appsvcs/declare"
+        as3CheckUrl="/mgmt/shared/appsvcs/info"
+        # ts
+        tsUrl="/mgmt/shared/telemetry/declare"
+        tsCheckUrl="/mgmt/shared/telemetry/info" 
+        DO_URL_POST="/mgmt/shared/declarative-onboarding"
+        AS3_URL_POST="/mgmt/shared/appsvcs/declare"
+        #
+        # BIG-IPS ONBOARD SCRIPT
+        #
+        # CHECK TO SEE NETWORK IS READY
+        count=0
+        while true
+        do
+          STATUS=$(curl -s -k -I example.com | grep HTTP)
+          if [[ $STATUS == *"200"* ]]; then
+            echo "internet access check passed"
+            break
+          elif [ $count -le 6 ]; then
+            echo "Status code: $STATUS  Not done yet..."
+            count=$[$count+1]
+          else
+            echo "GIVE UP..."
+            break
+          fi
+          sleep 10
+        done
+        # declaration content
+        cat > /config/do1.json <<EOF
+          {{doContent}}
+        EOF
+        # end dec content
+        # check do
+        function checkDO() {
+            # Check DO Ready
+            count=0
+            while [ $count -le 4 ]
+            do
+            #doStatus=$(curl -i -u $CREDS http://localhost:8100$doCheckUrl | grep HTTP | awk '{print $2}')
+            doStatusType=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r type )
+            if [ "$doStatusType" == "object" ]; then
+                doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .code)
+                if [ $? == 1 ]; then
+                    doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .result.code)
+                fi
+            elif [ "$doStatusType" == "array" ]; then
+                doStatus=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].result.code)
+            else
+                echo "unknown type:$doStatusType"
+            fi
+            echo "status $doStatus"
+            if [[ $doStatus == "200" ]]; then
+                #version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .version)
+                version=$(restcurl -u $CREDS -X GET $doCheckUrl | jq -r .[].version)
+                echo "Declarative Onboarding $version online "
+                break
+            elif [[ $doStatus == "404" ]]; then
+                echo "DO Status: $doStatus"
+                bigstart restart restnoded
+                sleep 60
+                bigstart status restnoded | grep running
+                status=$?
+                echo "restnoded:$status"
+            else
+                echo "DO Status $doStatus"
+                count=$[$count+1]
+            fi
+            sleep 10
+            done
+        }
+        # end check
+        # run do
+        function runDO() {
+        count=0
+        while [ $count -le 4 ]
+            do 
+            # make task
+            task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100/mgmt/shared/declarative-onboarding -d @/config/$1 | jq -r .id)
+            echo "starting DO task: $task"
+            sleep 1
+            count=$[$count+1]
+            # check task code
+            while true
+            do
+                code=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .code)
+                sleep 1
+                if  [ "$code" == "null" ] || [ -z "$code" ]; then
+                    sleep 1
+                    status=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                    sleep 1
+                    #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
+                    case $status in 
+                    FINISHED)
+                        # finished
+                        echo " $task status: $status "
+                        # bigstart start dhclient
+                        break 2
+                        ;;
+                    STARTED)
+                        # started
+                        echo " $filename status: $status "
+                        sleep 30
+                        ;;
+                    RUNNING)
+                        # running
+                        echo "DO Status: $status task: $task Not done yet..."
+                        sleep 30
+                        ;;
+                    FAILED)
+                        # failed
+                        error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                        echo "failed $task, $error"
+                        #count=$[$count+1]
+                        break
+                        ;;
+                    ERROR)
+                        # error
+                        error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                        echo "Error $task, $error"
+                        #count=$[$count+1]
+                        break
+                        ;;
+                    ROLLING_BACK)
+                        # Rolling back
+                        echo "Rolling back failed status: $status task: $task"
+                        break
+                        ;;
+                    OK)
+                        # complete no change
+                        echo "Complete no change status: $status task: $task"
+                        break 2
+                        ;;
+                    *)
+                        # other
+                        echo "other: $status"
+                        debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq .)
+                        echo "debug: $debug"
+                        error=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
+                        echo "Other $task, $error"
+                        # count=$[$count+1]
+                        sleep 30
+                        ;;
+                    esac
+                else
+                    echo "DO status code: $code"
+                    debug=$(restcurl -u $CREDS $doTaskUrl/$task | jq .)
+                    echo "debug do code: $debug"
+                    # count=$[$count+1]
+                fi
+                done
+              done
+          }
+          # run DO
+          count=0
+          while [ $count -le 4 ]
+              do
+                  doStatus=$(checkDO)
+              if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+                  echo "running do for id:$deviceId"
+                  bigstart stop dhclient
+                  runDO do1.json
+                  if [ "$?" == 0 ]; then
+                      echo "done with do"
+                      bigstart start dhclient
+                      results=$(restcurl -u $CREDS -X GET $doTaskUrl | jq '.[] | .id, .result')
+                      echo "do results: $results"
+                      break
+                  fi
+              elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then 
+                  echo "running do for id:$deviceId"
+                  bigstart stop dhclient
+                  runDO do2.json
+                  if [ "$?" == 0 ]; then
+                      echo "done with do"
+                      bigstart start dhclient
+                      results=$(restcurl -u $CREDS -X GET $doTaskUrl | jq '.[] | .id, .result')
+                      echo "do results: $results"
+                      break
+                  fi
+              elif [ $count -le 2 ]; then
+                  echo "Status code: $doStatus  DO not ready yet..."
+                  count=$[$count+1]
+                  sleep 30
+              else
+                  echo "DO not online status: $doStatus"
+                  break
+              fi
+          done

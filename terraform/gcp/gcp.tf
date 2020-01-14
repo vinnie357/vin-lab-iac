@@ -139,21 +139,21 @@ module "afm" {
   projectPrefix = "${var.projectPrefix}"
 }
 
-module "ltm" {
-  source   = "./ltm"
-  #====================#
-  # ltm settings       #
-  #====================#
-  gce_ssh_pub_key_file = "${var.sshKeyPath}"
-  adminSrcAddr = "${var.adminSrcAddr}"
-  adminPass = "${var.adminPass}"
-  adminAccountName = "${var.adminAccount}"
-  mgmt_vpc = "${google_compute_network.vpc_network_mgmt}"
-  int_vpc = "${google_compute_network.vpc_network_int}"
-  ext_vpc = "${google_compute_network.vpc_network_ext}"
-  mgmt_subnet = "${google_compute_subnetwork.vpc_network_mgmt_sub}"
-  int_subnet = "${google_compute_subnetwork.vpc_network_int_sub}"
-  ext_subnet = "${google_compute_subnetwork.vpc_network_ext_sub}"
-  projectPrefix = "${var.projectPrefix}"
-}
+# module "ltm" {
+#   source   = "./ltm"
+#   #====================#
+#   # ltm settings       #
+#   #====================#
+#   gce_ssh_pub_key_file = "${var.sshKeyPath}"
+#   adminSrcAddr = "${var.adminSrcAddr}"
+#   adminPass = "${var.adminPass}"
+#   adminAccountName = "${var.adminAccount}"
+#   mgmt_vpc = "${google_compute_network.vpc_network_mgmt}"
+#   int_vpc = "${google_compute_network.vpc_network_int}"
+#   ext_vpc = "${google_compute_network.vpc_network_ext}"
+#   mgmt_subnet = "${google_compute_subnetwork.vpc_network_mgmt_sub}"
+#   int_subnet = "${google_compute_subnetwork.vpc_network_int_sub}"
+#   ext_subnet = "${google_compute_subnetwork.vpc_network_ext_sub}"
+#   projectPrefix = "${var.projectPrefix}"
+# }
 
