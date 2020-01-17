@@ -157,3 +157,16 @@ module "afm" {
 #   projectPrefix = "${var.projectPrefix}"
 # }
 
+output "f5vm01_mgmt_public_ip" {
+  value = "${module.afm.f5vm01_mgmt_public_ip}"
+}
+output "f5vm02_mgmt_public_ip" {
+  value = "${module.afm.f5vm02_mgmt_public_ip}"
+}
+
+output "f5vm01_app_public_ip" {
+  value = "${module.afm.f5vm01_app_public_ip}"
+}
+output "f5vm02_app_public_ip" {
+  value = "${module.afm.f5vm02_app_public_ip}"
+}

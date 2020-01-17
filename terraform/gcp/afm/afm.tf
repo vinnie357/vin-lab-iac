@@ -100,13 +100,13 @@ data "template_file" "vm02_do_json" {
   }
 }
 # as3 uuid generation
-resource "random_uuid" "as3_uuid" { }
+# resource "random_uuid" "as3_uuid" { }
 
 #application services 3 template
 data "template_file" "as3_json" {
   template = "${file("${path.module}/templates/scca.json")}"
   vars ={
-      uuid = "${random_uuid.as3_uuid.result}"
+      uuid = "uuid()"
   }
 }
 
@@ -158,6 +158,24 @@ resource "google_compute_instance" "vm_instance" {
     # }
   }
 }
+resource "google_storage_bucket" "instance-store-1" {
+  name     = "${google_compute_instance.vm_instance.0.name}-storage"
+  location = "US"
+
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "404.html"
+  }
+}
+resource "google_storage_bucket" "instance-store-2" {
+  name     = "${google_compute_instance.vm_instance.1.name}-storage"
+  location = "US"
+
+  website {
+    main_page_suffix = "index.html"
+    not_found_page   = "404.html"
+  }
+}
 # gcloud compute instances describe afm-1-instance --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
 
 #output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.afm-1-instance.access_config[0].natIP}" }
@@ -167,10 +185,32 @@ resource "google_compute_instance" "vm_instance" {
 #  value = "${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}"
 # }
 output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.0.network_interface.0.access_config.0.nat_ip}" }
+output "f5vm01_app_public_ip" { value = "${google_compute_instance.vm_instance.0.network_interface.1.access_config.0.nat_ip}" }
 
 output "f5vm02_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.0.access_config.0.nat_ip}" }
+output "f5vm02_app_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.1.access_config.0.nat_ip}" }
 
 # // A variable for extracting the external ip of the instance
 # output "ip" {
 #  value = "${google_compute_instance.default.network_interface.0.access_config.0.nat_ip}"
+# }
+
+# as3
+# provider "bigip" {
+#     address = "${google_compute_instance.vm_instance.0.network_interface.0.access_config.0.nat_ip}"
+#     #address = "34.73.208.201"
+#     username = "${var.adminAccountName}"
+#     password = "${var.adminPass}"
+# }
+
+# data "template_file" "as3" {
+#   template = "${file("${path.module}/templates/scca_gcp.json")}"
+#   vars ={
+#       uuid = "uuid()"
+#       virtualIP = "${google_compute_instance.vm_instance.0.network_interface.1.network_ip}"
+#   }
+# }
+# resource "bigip_as3"  "as3-example" {
+#      as3_json = "${data.template_file.as3.rendered}"
+#      config_name = "Example"
 # }

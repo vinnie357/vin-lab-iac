@@ -317,7 +317,7 @@
                         "bigip": "/Common/tcp"
                     },
                     "virtualAddresses": [
-                        "-external-virtual-address-"
+                        "${virtualIP}"
                     ],
                     "virtualPort": 443,
                     "snat": "auto",
@@ -332,31 +332,19 @@
                             "addressDiscovery": "static",
                             "servicePort": 443,
                             "serverAddresses": [
-                                "-internal-app-address-"
+                                "192.168.2.55"
                             ]
                         }
                     ],
                     "class": "Pool"
                 },
                 "sccaBaselineJuiceShop": {
-                    "monitors": [
-                        {
-                            "bigip": "/Common/http"
-                        }
-                    ],
                     "members": [
                         {
                             "addressDiscovery": "static",
                             "servicePort": 3000,
                             "serverAddresses": [
-                                "-internal-app-address-"
-                            ]
-                        },
-                        {
-                            "addressDiscovery": "static",
-                            "servicePort": 3000,
-                            "serverAddresses": [
-                                "10.0.20.200"
+                                "10.0.20.5"
                             ]
                         },
                         {
@@ -372,24 +360,12 @@
                     "class": "Pool"
                 },
                 "sccaBaselineDemoApp": {
-                    "monitors": [
-                        {
-                            "bigip": "/Common/https"
-                        }
-                    ],
                     "members": [
                         {
                             "addressDiscovery": "static",
                             "servicePort": 4000,
                             "serverAddresses": [
-                                "-internal-app-address-"
-                            ]
-                        },
-                        {
-                            "addressDiscovery": "static",
-                            "servicePort": 4000,
-                            "serverAddresses": [
-                                "10.0.20.200"
+                                "10.0.20.5"
                             ]
                         },
                         {

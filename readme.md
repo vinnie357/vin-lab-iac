@@ -249,3 +249,9 @@ machine type
 image name
 gcloud compute images list --project f5-7626-networks-public | grep payg | grep 15-0-1-1-0-0-3
 gcloud compute images list --project f5-7626-networks-public | grep byol | grep 15-0-1-1-0-0-3
+
+# vault helm
+https://www.terraform.io/docs/providers/helm/index.html
+https://www.hashicorp.com/blog/announcing-the-vault-helm-chart/
+https://github.com/hashicorp/vault-helm
+
