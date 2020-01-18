@@ -398,20 +398,69 @@ echo "internal: $INT3ADDRESS,$INT3MASK,$INT3GATEWAY"
 echo "cidr: $MGMTNETWORK,$INT2NETWORK,$INT3NETWORK"
 
 # mgmt
-echo " delete mgmt"
+# mgmt reboot workaround
+# https://support.f5.com/csp/article/K11948
+# https://support.f5.com/csp/article/K47835034
+# chmod +w /config/startup
+# echo "/config/startup_script_sol11948.sh &" >> /config/startup
+# cat  <<EOF > /config/startup_script_sol11948.sh
+# #!/bin/bash
+# exec &>>/var/log/mgmt-startup-script.log
+# . /config/mgmt.sh
+# done
+# EOF
+# chmod +x /config/startup_script_sol11948.sh
+# cat  <<EOF > /config/mgmt.sh
+# #!/bin/bash
+# exec &>>/var/log/mgmt-startup-script.log
+# echo  "wait for mcpd"
+# checks=0
+# while [[ "$checks" -lt 120 ]]; do 
+#     echo "checking mcpd"
+#     mcpd=$(tmsh -a show sys mcp-state field-fmt | grep running | awk '{print $2}')
+#    if [ "$mcpd" == "running" ]; then
+#        echo "mcpd ready"
+#        tries=0
+#        while [[ "$tries" -lt 60 ]]; do
+#             gw="$(echo "$(ifconfig mgmt | grep 'inet' | cut -d: -f2 | awk '{print $2}' | cut -d"." -f1-3)")"".1"
+#             ip route change default via $gw dev mgmt mtu 1460
+#             mtu=$(ip route show | grep default | grep mgmt | awk '{ print $7}')
+#         if [ $mtu == 1460 ]; then
+#             ip route show | grep default
+#             echo "mgmt route done"
+#             exit
+#         else
+#             echo "not ready"
+#             sleep 10
+#             let tries=tries+1
+#         fi
+#        done
+#    fi
+#    echo "mcpd not ready yet: $mcpd"
+#    let checks=checks+1
+#    sleep 10
+# done
+# EOF
+# chmod +x /config/mgmt.sh
+# end management reboot workaround
+echo "set management"
 echo  -e "create cli transaction;
 modify sys global-settings mgmt-dhcp disabled;
-delete sys management-route all;
-delete sys management-ip all;
 submit cli transaction" | tmsh -q
-echo "set management"
+echo  -e "create cli transaction;
+delete sys management-route default;
+delete sys management-route dhclient_route1;
+delete sys management-route dhclient_route2;
+delete sys management-ip $MGMTADDRESS/32;
+submit cli transaction" | tmsh -q
 echo  -e "create cli transaction;
 create sys management-ip $MGMTADDRESS/32;
 create sys management-route mgmt_gw network $MGMTGATEWAY/32 type interface;
 create sys management-route mgmt_net network $MGMTNETWORK/$MGMTMASK gateway $MGMTGATEWAY;
-create sys management-route default gateway $MGMTGATEWAY;
+create sys management-route default gateway $MGMTGATEWAY mtu 1460;
 submit cli transaction" | tmsh -q
 # networks
+echo "set tmm networks"
 echo  -e "create cli transaction;
 create net vlan external interfaces add { 1.1 } mtu 1460;
 create net self external-self address $INT2ADDRESS/32 vlan external;
@@ -451,8 +500,10 @@ doReplaceTwo=$(getPeerAddress $INT3ADDRESS -1)
 echo " internal address: $INT3ADDRESS "
 echo "sync_ip_01:$doReplaceOne, sync_ip_02:$doReplaceTwo"
 sed -i "s/-remote-peer-addr-/$doReplaceOne/g" /config/do1.json
+sed -i "s/-mgmt-gw-addr-/$MGMTGATEWAY/g" /config/do1.json
 # internal address on box two will decrement
 sed -i "s/-remote-peer-addr-/$doReplaceTwo/g" /config/do2.json
+sed -i "s/-mgmt-gw-addr-/$MGMTGATEWAY/g" /config/do2.json
 # end modify DO
 # modify as3
 as3ReplacePool=$(getPeerAddress $INT2ADDRESS -1)
@@ -665,6 +716,10 @@ do
 done
 #
 #
+echo  -e 'create cli transaction;
+modify sys management-route default mtu 1460
+submit cli transaction' | tmsh -q
+tmsh save sys config
 echo "timestamp end: $(date)"
 echo "setup complete $(timer "$(($(date +%s) - $startTime))")"
 # remove declarations

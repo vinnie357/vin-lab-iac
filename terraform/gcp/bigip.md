@@ -229,3 +229,140 @@ sed -i "s/internal-self-address/$INT3ADDRESS/g" /config/do1.json
 sed -i "s/internal-self-address/$INT3ADDRESS/g" /config/do2.json
 sed -i "s/external-self-address/$INT2ADDRESS/g" /config/do1.json
 sed -i "s/external-self-address/$INT2ADDRESS/g" /config/do2.json
+
+# Losing management after reboot
+
+# working pre reboot:
+xadmin@(f5vm02)(cfg-sync Standalone)(Active)(/Common)(tmos)# list sys management-route
+sys management-route dhclient_route1 {
+    description configured-by-dhcp
+    network 10.0.10.1/32
+    type interface
+}
+sys management-route dhclient_route2 {
+    description configured-by-dhcp
+    gateway 10.0.10.1
+    network 10.0.10.0/24
+}
+sys management-route default {
+    description configured-by-dhcp
+    gateway 10.0.10.1
+    network default
+}
+[xadmin@f5vm02:Active:Standalone] ~ # tmsh show net route
+
+----------------------------------------------------------------------------------
+Net::Routes
+Name                Destination         Type       NextHop               Origin   
+----------------------------------------------------------------------------------
+ext_gw_interface    10.0.30.1/32        interface  /Common/external      static
+ext_rt              10.0.30.0/24        gw         10.0.30.1             static
+default             default             gw         10.0.30.1             static
+int_gw_interface    10.0.20.1/32        interface  /Common/internal      static
+int_rt              10.0.20.0/24        gw         10.0.20.1             static
+127.20.0.0/16       127.20.0.0/16       interface  tmm_bp                connected
+10.0.20.5/32        10.0.20.5/32        interface  /Common/internal      connected
+10.0.30.5/32        10.0.30.5/32        interface  /Common/external      connected
+127.1.1.0/24        127.1.1.0/24        interface  tmm                   connected
+ff02:fff::/64       ff02:fff::/64       interface  tmm_bp                connected
+fe80::%vlan4095/64  fe80::%vlan4095/64  interface  tmm_bp                connected
+fe80::/64           fe80::/64           interface  /Common/socks-tunnel  connected
+fe80::/64           fe80::/64           interface  /Common/http-tunnel   connected
+fe80::%vlan4095/64  fe80::%vlan4095/64  interface  /Common/tmm_bp        connected
+ff02:ffd::/64       ff02:ffd::/64       interface  /Common/internal      connected
+fe80::%vlan4093/64  fe80::%vlan4093/64  interface  /Common/internal      connected
+ff02:ffe::/64       ff02:ffe::/64       interface  /Common/external      connected
+fe80::%vlan4094/64  fe80::%vlan4094/64  interface  /Common/external      connected
+ff02:fff::/64       ff02:fff::/64       interface  /Common/tmm_bp        connected
+ff02::/64           ff02::/64           interface  tmm                   connected
+fe80::/64           fe80::/64           interface  tmm                   connected
+[xadmin@f5vm02:Active:Standalone] ~ # route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+default         10.0.30.1       0.0.0.0         UG    0      0        0 external
+default         10.0.10.1       0.0.0.0         UG    9      0        0 mgmt
+10.0.10.0       10.0.10.1       255.255.255.0   UG    9      0        0 mgmt
+10.0.10.1       0.0.0.0         255.255.255.255 UH    9      0        0 mgmt
+10.0.20.0       10.0.20.1       255.255.255.0   UG    0      0        0 internal
+10.0.20.1       0.0.0.0         255.255.255.255 UH    0      0        0 internal
+10.0.30.0       10.0.30.1       255.255.255.0   UG    0      0        0 external
+10.0.30.1       0.0.0.0         255.255.255.255 UH    0      0        0 external
+127.1.1.0       0.0.0.0         255.255.255.0   U     0      0        0 tmm
+127.7.0.0       tmm-shared      255.255.0.0     UG    0      0        0 tmm
+127.20.0.0      0.0.0.0         255.255.0.0     U     0      0        0 tmm_bp
+# failing post reboot:
+[xadmin@f5vm01:Active:Standalone] ~ # tmsh list sys management-route
+sys management-route dhclient_route1 {
+    description configured-by-dhcp
+    network 10.0.10.1/32
+    type interface
+}
+sys management-route dhclient_route2 {
+    description configured-by-dhcp
+    gateway 10.0.10.1
+    network 10.0.10.0/24
+}
+sys management-route default {
+    description configured-by-dhcp
+    gateway 10.0.10.1
+    network default
+}
+[xadmin@f5vm01:Active:Standalone] ~ # tmsh show net route
+
+----------------------------------------------------------------------------------
+Net::Routes
+Name                Destination         Type       NextHop               Origin
+----------------------------------------------------------------------------------
+ext_gw_interface    10.0.30.1/32        interface  /Common/external      static
+ext_rt              10.0.30.0/24        gw         10.0.30.1             static
+default             default             gw         10.0.30.1             static
+int_gw_interface    10.0.20.1/32        interface  /Common/internal      static
+int_rt              10.0.20.0/24        gw         10.0.20.1             static
+127.20.0.0/16       127.20.0.0/16       interface  tmm_bp                connected
+10.0.20.4/32        10.0.20.4/32        interface  /Common/internal      connected
+10.0.30.4/32        10.0.30.4/32        interface  /Common/external      connected
+127.1.1.0/24        127.1.1.0/24        interface  tmm                   connected
+fe80::%vlan4094/64  fe80::%vlan4094/64  interface  /Common/external      connected
+fe80::%vlan4093/64  fe80::%vlan4093/64  interface  /Common/internal      connected
+ff02:fff::/64       ff02:fff::/64       interface  tmm_bp                connected
+fe80::%vlan4095/64  fe80::%vlan4095/64  interface  tmm_bp                connected
+fe80::/64           fe80::/64           interface  /Common/socks-tunnel  connected
+fe80::/64           fe80::/64           interface  /Common/http-tunnel   connected
+fe80::%vlan4095/64  fe80::%vlan4095/64  interface  /Common/tmm_bp        connected
+ff02:ffd::/64       ff02:ffd::/64       interface  /Common/internal      connected
+ff02:ffe::/64       ff02:ffe::/64       interface  /Common/external      connected
+ff02:fff::/64       ff02:fff::/64       interface  /Common/tmm_bp        connected
+ff02::/64           ff02::/64           interface  tmm                   connected
+fe80::/64           fe80::/64           interface  tmm                   connected
+[xadmin@f5vm01:Active:Standalone] ~ # route
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+10.0.10.1       0.0.0.0         255.255.255.255 UH    9      0        0 mgmt
+10.0.20.0       10.0.20.1       255.255.255.0   UG    0      0        0 internal
+10.0.20.1       0.0.0.0         255.255.255.255 UH    0      0        0 internal
+10.0.30.0       10.0.30.1       255.255.255.0   UG    0      0        0 external
+10.0.30.1       0.0.0.0         255.255.255.255 UH    0      0        0 external
+127.1.1.0       0.0.0.0         255.255.255.0   U     0      0        0 tmm
+127.7.0.0       tmm-shared      255.255.0.0     UG    0      0        0 tmm
+127.20.0.0      0.0.0.0         255.255.0.0     U     0      0        0 tmm_bp
+
+
+# do logs for DO team
+do results: "dbfdb44c-a62f-4e1b-bc01-fd033dfc0154"
+{
+  "class": "Result",
+  "code": 422,
+  "status": "ERROR",
+  "message": "invalid config - rolled back",
+  "errors": [
+    "remoteSender:127.0.0.1, method:PATCH ",
+    "remoteSender:127.0.0.1, method:PATCH "
+  ]
+}
+"94f65f01-ffb6-4bcc-ac8b-d55717488d99"
+{
+  "class": "Result",
+  "code": 200,
+  "status": "OK",
+  "message": "success"
+}

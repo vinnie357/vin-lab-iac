@@ -78,6 +78,13 @@
             "network": "default",
             "mtu": 1460
         },
+        "route-mgmt":{
+            "class":"ManagementRoute",
+            "gw":"10.0.10.1",
+            "network":"default",
+            "mtu": 1460,
+            "type": "interface"
+        },
         "external-self": {
             "class": "SelfIp",
             "address": "${local_ext_selfip}/32",
