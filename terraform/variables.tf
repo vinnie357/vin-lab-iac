@@ -57,6 +57,14 @@ variable "GCP_SSH_KEY_PATH" {
   
 }
 
+variable "gcp_service_accounts" {
+  type = "map"
+  default = {
+      storage = "default-compute@developer.gserviceaccount.com"
+      compute = "default-compute@developer.gserviceaccount.com"
+    }
+}
+
 #====================#
 # admin   connection #
 #====================#

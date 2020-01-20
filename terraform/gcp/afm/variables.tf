@@ -1,4 +1,7 @@
 
+variable "service_accounts" {
+  type = "map"
+}
 # networks
 variable "int_vpc" {
   

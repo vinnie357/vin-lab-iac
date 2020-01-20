@@ -332,7 +332,7 @@
                             "addressDiscovery": "static",
                             "servicePort": 443,
                             "serverAddresses": [
-                                "-internal-app-address-"
+                                "10.0.20.100"
                             ]
                         }
                     ],
@@ -349,13 +349,6 @@
                             "addressDiscovery": "static",
                             "servicePort": 3000,
                             "serverAddresses": [
-                                "-internal-app-address-"
-                            ]
-                        },
-                        {
-                            "addressDiscovery": "static",
-                            "servicePort": 3000,
-                            "serverAddresses": [
                                 "10.0.20.200"
                             ]
                         },
@@ -366,7 +359,8 @@
                             "tagKey": "juiceShop",
                             "tagValue": "dev",
                             "addressRealm": "private",
-                            "region": "us-east1"
+                            "region": "us-east1",
+                            "encodedCredentials": "-sd-sa-token-b64-"
                           }
                     ],
                     "class": "Pool"
@@ -382,13 +376,6 @@
                             "addressDiscovery": "static",
                             "servicePort": 4000,
                             "serverAddresses": [
-                                "-internal-app-address-"
-                            ]
-                        },
-                        {
-                            "addressDiscovery": "static",
-                            "servicePort": 4000,
-                            "serverAddresses": [
                                 "10.0.20.200"
                             ]
                         },
@@ -399,7 +386,8 @@
                             "tagKey": "demoApp",
                             "tagValue": "dev",
                             "addressRealm": "private",
-                            "region": "us-east1"
+                            "region": "us-east1",
+                            "encodedCredentials": "-sd-sa-token-b64-"
                           }
                     ],
                     "class": "Pool"

@@ -366,3 +366,19 @@ do results: "dbfdb44c-a62f-4e1b-bc01-fd033dfc0154"
   "status": "OK",
   "message": "success"
 }
+
+# storage API buckets
+https://cloud.google.com/storage/docs/json_api/v1/
+https://cloud.google.com/storage/docs/json_api/v1/buckets/get
+https://cloud.google.com/storage/docs/downloading-objects
+curl -X GET \
+  -H "Authorization: Bearer [OAUTH2_TOKEN]" \
+  -o "[SAVE_TO_LOCATION]" \
+  "https://storage.googleapis.com/storage/v1/b/[BUCKET_NAME]/o/[OBJECT_NAME]?alt=media"
+
+# service discovery
+oauth?
+# using bearer token from metadata api
+token=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' -H 'Metadata-Flavor: Google' | jq -r .access_token )
+sdToken=$(echo "$token" | base64)
+$echo "$sdToken"

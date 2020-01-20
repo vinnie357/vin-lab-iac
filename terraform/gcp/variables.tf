@@ -1,6 +1,9 @@
 variable "GCP_SA_FILE" {
   description = "creds file name"
 }
+variable "service_accounts" {
+  type = "map"
+}
 
 variable "GCP_PROJECT_ID" {
   description = "project ID"

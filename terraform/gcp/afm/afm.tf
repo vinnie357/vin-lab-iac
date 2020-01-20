@@ -51,11 +51,12 @@ data "template_file" "vm_onboard" {
     DO1_Document        = "${data.template_file.vm01_do_json.rendered}"
     DO2_Document        = "${data.template_file.vm02_do_json.rendered}"
     AS3_Document        = "${data.template_file.as3_json.rendered}"
+    projectPrefix       = "${var.projectPrefix}"
   }
 }
 #Declarative Onboarding template 01
 data "template_file" "vm01_do_json" {
-  template = "${file("${path.module}/templates/standalone.json")}"
+  template = "${file("${path.module}/templates/${var.vm_count >= 2 ? "cluster" : "standalone"}.json")}"
 
   vars = {
     #Uncomment the following line for BYOL
@@ -78,7 +79,7 @@ data "template_file" "vm01_do_json" {
 }
 #Declarative Onboarding template 02
 data "template_file" "vm02_do_json" {
-  template = "${file("${path.module}/templates/standalone.json")}"
+  template = "${file("${path.module}/templates/${var.vm_count >= 2 ? "cluster" : "standalone"}.json")}"
 
   vars = {
     #Uncomment the following line for BYOL
@@ -107,6 +108,7 @@ data "template_file" "as3_json" {
   template = "${file("${path.module}/templates/scca.json")}"
   vars ={
       uuid = "uuid()"
+    #   sdCreds = "${base64encode(file("/creds/gcp/${var.GCP_SA_FILE}.json"))}"
   }
 }
 
@@ -157,9 +159,33 @@ resource "google_compute_instance" "vm_instance" {
     # access_config {
     # }
   }
+    service_account {
+    # https://cloud.google.com/sdk/gcloud/reference/alpha/compute/instances/set-scopes#--scopes
+    # email = "${var.service_accounts.compute}"
+    scopes = [ "storage-ro", "logging-write", "monitoring-write", "monitoring", "pubsub", "service-management" , "service-control" ]
+    # scopes = [ "storage-ro"]
+  }
 }
-resource "google_storage_bucket" "instance-store-1" {
-  name     = "${google_compute_instance.vm_instance.0.name}-storage"
+# resource "google_storage_bucket" "instance-store-1" {
+#   name     = "${google_compute_instance.vm_instance.0.name}-storage"
+#   location = "US"
+
+#   website {
+#     main_page_suffix = "index.html"
+#     not_found_page   = "404.html"
+#   }
+# }
+# resource "google_storage_bucket" "instance-store-2" {
+#   name     = "${google_compute_instance.vm_instance.1.name}-storage"
+#   location = "US"
+
+#   website {
+#     main_page_suffix = "index.html"
+#     not_found_page   = "404.html"
+#   }
+# }
+resource "google_storage_bucket" "bigip-ha" {
+  name     = "${var.projectPrefix}bigip-storage"
   location = "US"
 
   website {
@@ -167,15 +193,18 @@ resource "google_storage_bucket" "instance-store-1" {
     not_found_page   = "404.html"
   }
 }
-resource "google_storage_bucket" "instance-store-2" {
-  name     = "${google_compute_instance.vm_instance.1.name}-storage"
-  location = "US"
 
-  website {
-    main_page_suffix = "index.html"
-    not_found_page   = "404.html"
-  }
+resource "google_storage_bucket_object" "bigip-1" {
+name = "bigip-1"
+content = "${google_compute_instance.vm_instance.0.network_interface.2.network_ip}"
+bucket = "${google_storage_bucket.bigip-ha.name}"
 }
+resource "google_storage_bucket_object" "bigip-2" {
+name = "bigip-2"
+content = "${google_compute_instance.vm_instance.1.network_interface.2.network_ip}"
+bucket = "${google_storage_bucket.bigip-ha.name}"
+}
+
 # gcloud compute instances describe afm-1-instance --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
 
 #output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.afm-1-instance.access_config[0].natIP}" }

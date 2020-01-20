@@ -398,51 +398,6 @@ echo "internal: $INT3ADDRESS,$INT3MASK,$INT3GATEWAY"
 echo "cidr: $MGMTNETWORK,$INT2NETWORK,$INT3NETWORK"
 
 # mgmt
-# mgmt reboot workaround
-# https://support.f5.com/csp/article/K11948
-# https://support.f5.com/csp/article/K47835034
-# chmod +w /config/startup
-# echo "/config/startup_script_sol11948.sh &" >> /config/startup
-# cat  <<EOF > /config/startup_script_sol11948.sh
-# #!/bin/bash
-# exec &>>/var/log/mgmt-startup-script.log
-# . /config/mgmt.sh
-# done
-# EOF
-# chmod +x /config/startup_script_sol11948.sh
-# cat  <<EOF > /config/mgmt.sh
-# #!/bin/bash
-# exec &>>/var/log/mgmt-startup-script.log
-# echo  "wait for mcpd"
-# checks=0
-# while [[ "$checks" -lt 120 ]]; do 
-#     echo "checking mcpd"
-#     mcpd=$(tmsh -a show sys mcp-state field-fmt | grep running | awk '{print $2}')
-#    if [ "$mcpd" == "running" ]; then
-#        echo "mcpd ready"
-#        tries=0
-#        while [[ "$tries" -lt 60 ]]; do
-#             gw="$(echo "$(ifconfig mgmt | grep 'inet' | cut -d: -f2 | awk '{print $2}' | cut -d"." -f1-3)")"".1"
-#             ip route change default via $gw dev mgmt mtu 1460
-#             mtu=$(ip route show | grep default | grep mgmt | awk '{ print $7}')
-#         if [ $mtu == 1460 ]; then
-#             ip route show | grep default
-#             echo "mgmt route done"
-#             exit
-#         else
-#             echo "not ready"
-#             sleep 10
-#             let tries=tries+1
-#         fi
-#        done
-#    fi
-#    echo "mcpd not ready yet: $mcpd"
-#    let checks=checks+1
-#    sleep 10
-# done
-# EOF
-# chmod +x /config/mgmt.sh
-# end management reboot workaround
 echo "set management"
 echo  -e "create cli transaction;
 modify sys global-settings mgmt-dhcp disabled;
@@ -459,6 +414,37 @@ create sys management-route mgmt_gw network $MGMTGATEWAY/32 type interface;
 create sys management-route mgmt_net network $MGMTNETWORK/$MGMTMASK gateway $MGMTGATEWAY;
 create sys management-route default gateway $MGMTGATEWAY mtu 1460;
 submit cli transaction" | tmsh -q
+
+# mgmt reboot workaround
+#https://support.f5.com/csp/article/K11948
+#https://support.f5.com/csp/article/K47835034
+chmod +w /config/startup
+echo "/config/startup_script_sol11948.sh &" >> /config/startup
+cat  <<EOF > /config/startup_script_sol11948.sh
+#!/bin/bash
+exec &>>/var/log/mgmt-startup-script.log
+. /config/startup_script_sol11948.sh
+done
+EOF
+chmod +x /config/startup_script_sol11948.sh
+cat  <<EOF > /config/startup_script_sol11948.sh
+#!/bin/bash
+exec &>>/var/log/mgmt-startup-script.log
+echo  "wait for mcpd"
+sleep 120
+echo  "first try"
+tmsh delete sys management-route default
+tmsh create sys management-route default gateway $(gw="$(echo "$(ifconfig mgmt | grep 'inet' | cut -d: -f2 | awk '{print $2}' | cut -d"." -f1-3)")"".1"; echo $gw)  mtu 1460
+sleep 120
+echo  "2nd try"
+tmsh delete sys management-route default
+tmsh create sys management-route default gateway $(gw="$(echo "$(ifconfig mgmt | grep 'inet' | cut -d: -f2 | awk '{print $2}' | cut -d"." -f1-3)")"".1"; echo $gw)  mtu 1460
+tmsh save sys config
+echo "done"
+EOF
+chmod +x /config/startup_script_sol11948.sh
+# end management reboot workaround
+
 # networks
 echo "set tmm networks"
 echo  -e "create cli transaction;
@@ -494,22 +480,32 @@ for i in $(seq 1 1); do
 done
 }
 
+PROJECTPREFIX=${projectPrefix}
+bigip1url=$(echo "https://storage.googleapis.com/storage/v1/b/"$PROJECTPREFIX"bigip-storage/o/bigip-1?alt=media")
+bigip2url=$(echo "https://storage.googleapis.com/storage/v1/b/"$PROJECTPREFIX"bigip-storage/o/bigip-2?alt=media")
+token=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' -H 'Metadata-Flavor: Google' | jq -r .access_token )
+bigip1ip=$(curl -s -f --retry 20 "$bigip1url" -H 'Metadata-Flavor: Google' -H "Authorization":"Bearer $token" )
+bigip2ip=$(curl -s -f --retry 20 "$bigip2url" -H 'Metadata-Flavor: Google' -H "Authorization":"Bearer $token" )
+echo "one: $bigip1ip"
+echo "two: $bigip2ip"
 # internal address on box one will increment
 doReplaceOne=$(getPeerAddress $INT3ADDRESS 1)
 doReplaceTwo=$(getPeerAddress $INT3ADDRESS -1)
 echo " internal address: $INT3ADDRESS "
-echo "sync_ip_01:$doReplaceOne, sync_ip_02:$doReplaceTwo"
-sed -i "s/-remote-peer-addr-/$doReplaceOne/g" /config/do1.json
+echo "sync_ip_01:$bigip1ip, sync_ip_02:$bigip2ip"
+sed -i "s/-remote-peer-addr-/$bigip2ip/g" /config/do1.json
 sed -i "s/-mgmt-gw-addr-/$MGMTGATEWAY/g" /config/do1.json
+sed -i "s/-internal-self-address-/$INT3ADDRESS/g" /config/do1.json
 # internal address on box two will decrement
-sed -i "s/-remote-peer-addr-/$doReplaceTwo/g" /config/do2.json
+sed -i "s/-remote-peer-addr-/$bigip1ip/g" /config/do2.json
 sed -i "s/-mgmt-gw-addr-/$MGMTGATEWAY/g" /config/do2.json
+sed -i "s/-internal-self-address-/$INT3ADDRESS/g" /config/do2.json
 # end modify DO
 # modify as3
-as3ReplacePool=$(getPeerAddress $INT2ADDRESS -1)
-echo " virtual address $INT2ADDRESS "
+sdToken=$(echo "$token" | base64)
 sed -i "s/-external-virtual-address-/$INT2ADDRESS/g" /config/as3.json
-sed -i "s/-internal-app-address-/$as3ReplacePool/g" /config/as3.json
+sed -i "s/-sd-sa-token-b64-/$token/g" /config/as3.json
+
 # end modify as3
 function runDO() {
     count=0

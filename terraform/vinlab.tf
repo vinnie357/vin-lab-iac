@@ -46,4 +46,5 @@ module "gcp" {
     adminAccount = "${var.adminAccount}"
     adminPass = "${var.adminPass}"
     projectPrefix = "${var.projectPrefix}"
+    service_accounts = "${var.gcp_service_accounts}"
 }
