@@ -3,6 +3,7 @@ vault.yaml
 *.ova
 *.ovf
 do.json
+as3.json
 vinlab.vmware.yml
 creds.auto.tfvars
 controller-installer-2.9.0.tar.gz
@@ -12,6 +13,7 @@ creds/aws/*.json
 !creds/aws/my_example_creds.json
 creds/azure/*.json
 !creds/azure/my_example_creds.json
+f5devcentral.atc_deploy
 
 #https://github.com/github/gitignore/blob/master/Global/Ansible.gitignore
 *.retry

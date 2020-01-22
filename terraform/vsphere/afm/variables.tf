@@ -37,20 +37,29 @@ variable "vm_network_1" {
 }
 variable "vm_network_2" {
   description = "Network used for the vSphere virtual machines"
-  default = "192.168.3.0"
+  default = "192.168.1.0"
 }
 variable "vm_network_3" {
   description = "Network used for the vSphere virtual machines"
-  default = "192.168.2.0"
+  default = "192.168.3.0"
 }
 variable "vm_network_4" {
+  description = "Network used for the vSphere virtual machines"
+  default = "192.168.2.0"
+}
+variable "vm_network_5" {
+  description = "Network used for the vSphere virtual machines"
+  default = "192.168.10.0/24_labvirtuals_vlan10"
+}
+variable "vm_network_6" {
   description = "Network used for the vSphere virtual machines"
   default = "192.168.40.0/24_f5_ha_vlan40"
 }
 
 variable "vm_template" {
   description = "Template used to create the vSphere virtual machines"
-  default = "BIGIP-14.1.2.1-0.0.4.ALL"
+  #default = "BIGIP-14.1.2.1-0.0.4.ALL"
+  default ="BIGIP-15.1.0-0.0.31"
 }
 
 variable "vm_linked_clone" {
@@ -90,7 +99,8 @@ variable "vm_cpu" {
 
 variable "vm_ram" {
   description = "Amount of RAM for the vSphere virtual machines (example: 2048)"
-  default = "16384"
+#   default = "16384"
+    default = "6144"
 }
 
 variable "vm_name" {
@@ -136,9 +146,26 @@ variable "dns_server_list" {
 
 # bigip stuff
 
-variable f5vm01mgmt { default = "10.0.20.111" }
-variable f5vm01ext { default = "10.0.1.111" }
-variable f5vm01ext_sec { default = "10.90.2.11" }
+# afm-01
+variable f5vm01_mgmt { default = "192.168.20.248" }
+variable f5vm01_ext { default = "192.168.1.248" }
+
+variable f5vm01_int { default = "192.168.2.248" }
+variable f5vm01_server { default = "192.168.3.248" }
+variable f5vm01_virtuals { default = "192.168.10.248" }
+variable f5vm01_client { default = "192.168.30.248" }
+# afm- 02
+
+variable f5vm02_mgmt { default = "192.168.20.249" }
+variable f5vm02_ext { default = "192.168.1.249" }
+
+variable f5vm02_int { default = "192.168.2.249" }
+variable f5vm02_server { default = "192.168.3.249" }
+variable f5vm02_virtuals { default = "192.168.10.249" }
+variable f5vm02_client { default = "192.168.30.249" }
+# other
+
+variable f5vm0ext_sec { default = "10.90.2.11" }
 variable f5vm01int { default = "10.0.3.111"}
 variable f5vm02mgmt { default = "10.0.10.4" }
 variable f5vm02ext { default = "10.0.30.4" }

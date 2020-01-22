@@ -1,0 +1,205 @@
+{
+    "schemaVersion": "1.9.0",
+    "class": "Device",
+    "async": true,
+    "label": "BIG-IP VE cluster vmware",
+    "Common": {
+        "class": "Tenant",
+        "hostname": "{{ item.hostname}}",
+        "myLicense": {
+            "class": "License",
+            "hypervisor": "vmware",
+            "licenseType": "licensePool",
+            "bigIqHost": "{{bigiq.host}}",
+            "bigIqUsername": "{{bigiq.user}}",
+            "bigIqPassword": "{{bigiq.password}}",
+            "licensePool": "{{bigiq.licensepool}}",
+            "reachable": true,
+            "bigIpUsername": "{{device.admin_user}}",
+            "bigIpPassword": "{{device.admin_pass}}"
+        },
+        "myDns": {
+            "class": "DNS",
+            "nameServers": {{item.dns.servers}},
+            "search": {{item.dns.search}}
+        },
+        "myNtp": {
+            "class": "NTP",
+            "servers": {{ item.ntp.servers}},
+            "timezone": "{{item.ntp.timezone}}"
+        },
+        "myProvisioning": {
+        	"class": "Provision",
+        	"avr": "{{item.provisioning.avr}}",
+            "ltm": "{{item.provisioning.ltm}}",
+            "asm": "{{item.provisioning.asm}}",
+            "apm": "{{item.provisioning.apm}}",
+            "afm": "{{item.provisioning.afm}}"
+        },
+        "external": {
+            "class": "VLAN",
+            "tag": {{item.network.vlans.external.tag}},
+            "mtu": 1500,
+            "interfaces": [
+                {
+                    "name": "{{item.network.vlans.external.interface}}",
+                    "tagged": {{item.network.vlans.external.tagging}}
+                }
+            ]
+        },
+        "server": {
+            "class": "VLAN",
+            "tag": {{item.network.vlans.server.tag}},
+            "mtu": 1500,
+            "interfaces": [
+                {
+                    "name": "{{item.network.vlans.server.interface}}",
+                    "tagged": {{item.network.vlans.server.tagging}}
+                }
+            ]
+        },
+        "internal": {
+            "class": "VLAN",
+            "tag": {{item.network.vlans.internal.tag}},
+            "mtu": 1500,
+            "interfaces": [
+                {
+                    "name": "{{item.network.vlans.internal.interface}}",
+                    "tagged": {{item.network.vlans.internal.tagging}}
+                }
+            ]
+        },
+        "virtuals": {
+            "class": "VLAN",
+            "tag": {{item.network.vlans.virtuals.tag}},
+            "mtu": 1500,
+            "interfaces": [
+                {
+                    "name": "{{item.network.vlans.virtuals.interface}}",
+                    "tagged": {{item.network.vlans.virtuals.tagging}}
+                }
+            ]
+        },
+        "ha": {
+            "class": "VLAN",
+            "tag": {{item.network.vlans.ha.tag}},
+            "mtu": 1500,
+            "interfaces": [
+                {
+                    "name": "{{item.network.vlans.ha.interface}}",
+                    "tagged": {{item.network.vlans.ha.tagging}}
+                }
+            ]
+        },
+        "external-self":{
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.external.selfipnf}}",
+            "vlan": "external",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-local-only"
+        },
+        "external-float":{
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.external.selfipf}}",
+            "vlan": "external",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-1"
+        },
+        "server-self": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.server.selfipnf}}",
+            "vlan": "server",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-local-only"
+        },
+        "server-float": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.server.selfipf}}",
+            "vlan": "server",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-1"
+        },
+        "internal-self": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.internal.selfipnf}}",
+            "vlan": "internal",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-local-only"
+        },
+        "internal-float": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.internal.selfipf}}",
+            "vlan": "internal",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-1"
+        },
+        "virtuals-self": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.virtuals.selfipnf}}",
+            "vlan": "virtuals",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-local-only"
+        },
+        "virtuals-float": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.virtuals.selfipf}}",
+            "vlan": "virtuals",
+            "allowService": "none",
+            "trafficGroup": "traffic-group-1"
+        },
+        "ha-self": {
+            "class": "SelfIp",
+            "address": "{{item.network.vlans.ha.selfipnf}}",
+            "vlan": "ha",
+            "allowService": "default",
+            "trafficGroup": "traffic-group-local-only"
+        },
+        "default_gw":{
+            "class": "Route",
+            "gw": "{{item.network.routes.default.gateway}}",
+            "network": "default",
+            "mtu": 1500
+        },
+        "internal_gw":{
+            "class": "Route",
+            "gw": "{{item.network.routes.internal.gateway}}",
+            "network": "{{item.network.routes.internal.network}}",
+            "mtu": 1500
+        },
+        "dbvars": {
+            "class": "DbVariables",
+            "ui.advisory.enabled": true,
+            "ui.advisory.color": "green",
+            "ui.advisory.text": "/Common/hostname"
+        },
+        "configsync": {
+            "class": "ConfigSync",
+            "configsyncIp": "/Common/ha-self/address"
+        },
+        "failoverAddress": {
+            "class": "FailoverUnicast",
+            "address": "/Common/ha-self/address"
+        },
+        "failoverGroup": {
+            "class": "DeviceGroup",
+            "type": "sync-failover",
+            "members": [
+                "{{item.dsc.primary.host}}","{{item.dsc.secondary.host}}"
+            ],
+            "owner": "/Common/failoverGroup/members/0",
+            "autoSync": true,
+            "saveOnAutoSync": true,
+            "networkFailover": true,
+            "fullLoadOnSync": false,
+            "asmSync": false
+        },
+        "trust": {
+            "class": "DeviceTrust",
+            "localUsername": "{{device.admin_user}}",
+            "localPassword": "{{device.admin_pass}}",
+            "remoteHost": "{{item.dsc.primary.ip}}",
+            "remoteUsername": "{{device.admin_user}}",
+            "remotePassword": "{{device.admin_pass}}"
+        }
+    }
+}

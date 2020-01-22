@@ -1,17 +1,17 @@
-ansible_host: "192.168.20.248"
+ansible_host: "192.168.20.249"
 device:
   hostname: "afm1.vin-lab.com"
   password: "{{vault_bigip_password}}"
   admin_user: "{{vault_adminUser}}"
   admin_pass: "{{vault_adminPass}}"
   management:
-    ip: "192.168.20.248"
+    ip: "192.168.20.249"
     gw: "192.168.20.254"
-    ipmask: '192.168.20.248/24'
+    ipmask: '192.168.20.249/24'
   do:
     devices:
       - template: "bigip_ha_ve_vmware"
-        hostname: "afm-01-dev.vin-lab.com"
+        hostname: "afm-02-dev.vin-lab.com"
         dsc:
           primary: 
             host: "afm-01-dev.vin-lab.com"
@@ -25,35 +25,35 @@ device:
             external:
               tag: 2
               interface: "1.1"
-              selfipnf: "192.168.1.248/24"
+              selfipnf: "192.168.1.249/24"
               selfipf: "192.168.1.250/24"
               tagging: "{{'false'}}"
             server:
               tag: 4
               interface: "1.2"
-              selfipnf: "192.168.3.248/24"
+              selfipnf: "192.168.3.249/24"
               selfipf: "192.168.3.250/24"
               tagging: "{{'false'}}"
             internal:
               tag: 1
               interface: "1.3"
-              selfipnf: "192.168.2.248/24"
+              selfipnf: "192.168.2.249/24"
               selfipf: "192.168.2.250/24"
               tagging: "{{'false'}}"
             virtuals:
               tag: 10
               interface: "1.4"
-              selfipnf: "192.168.10.248/24"
+              selfipnf: "192.168.10.249/24"
               selfipf: "192.168.10.250/24"
               tagging: "{{'false'}}"
             ha:
               tag: 40
               interface: "1.5"
-              selfipnf: "192.168.4.248/24"
+              selfipnf: "192.168.4.249/24"
               tagging: "{{'false'}}"
           routes:
             default:
-              gateway: "192.168.1.1"
+              gateway: "192.168.2.254"
             internal:
               network: "192.0.0.0/8"
               gateway: "192.168.1.254"

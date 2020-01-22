@@ -1,0 +1,279 @@
+{
+    "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/master/schema/latest/as3-schema.json",
+    "class":"AS3",
+    "action":"deploy",
+    "persist":true,
+    "declaration": { 
+        "class": "ADC",
+        "schemaVersion": "3.16.0",
+        "id": "{{uuid}}",
+        "label": "afm baseline",
+        "Common": {
+            "class": "Tenant",
+            "Shared": {
+                "class": "Application",
+                "template": "shared",
+                "certificate_default": {
+                    "class": "Certificate",
+                    "certificate": {
+                        "bigip": "/Common/default.crt"
+                    },
+                    "privateKey": {
+                        "bigip": "/Common/default.key"
+                    }
+                },
+                "sccaBaselineAFMRuleList":{
+                    "class": "Firewall_Rule_List",
+                    "rules": [
+                        {
+                            "action": "accept",
+                            "name": "allow_all",
+                            "protocol": "any"
+                        }
+                    ]
+                },
+                "sccaBaselineAFMPolicy": {
+                    "class": "Firewall_Policy",
+                    "rules": [
+                        {
+                            "action": "accept",
+                            "loggingEnabled": true,
+                            "name": "allow_all",
+                            "protocol": "any"
+                        },
+                        {
+                            "action": "accept",
+                            "loggingEnabled": true,
+                            "name": "deny_all",
+                            "protocol": "any"
+                        }
+                    ]
+                    
+                },
+                "sccaBaselineAFMPolicyHTTP": {
+                    "class": "Firewall_Policy",
+                    "rules": [
+                        {
+                            "action": "accept",
+                            "loggingEnabled": true,
+                            "name": "allow_all",
+                            "protocol": "any"
+                        },
+                        {
+                            "action": "accept",
+                            "loggingEnabled": true,
+                            "name": "deny_all",
+                            "protocol": "any"
+                        }
+                    ]
+                    
+                }
+            }
+        },   
+        "firewall": {
+            "class": "Tenant",
+            "internal": {
+                "class": "Application",
+                "template": "l4",
+                "serviceMain": {
+                    "profileL4": "basic",
+                    "class": "Service_L4",
+                    "virtualAddresses": [
+                        "0.0.0.0"
+                    ],
+                    "virtualPort": 0,
+                    "allowVlans":[
+                        {"bigip": "/Common/internal"},
+                        {"bigip": "/Common/server"}
+                    ],
+                    "layer4": "any"
+                },
+                "internal-ingress-sni": {
+                    "layer4": "tcp",
+                    "translateServerAddress": true,
+                    "translateServerPort": true,
+                    "class": "Service_HTTPS",
+                    "profileHTTP": {
+                        "bigip": "/Common/http"
+                    },
+                    "serverTLS": {
+                        "bigip": "/Common/clientssl"
+                    },
+                    "profileTCP": {
+                        "bigip": "/Common/f5-tcp-progressive"
+                    },
+                    "virtualAddresses": [
+                        "192.168.10.250"
+                    ],
+                    "virtualPort": 443,
+                    "snat": "auto",
+                    "iRules": [
+                         "internal_pool_by_sni"
+                    ]
+                },
+                "internal_pool_by_sni": {
+                    "class": "iRule",
+                    "iRule": {
+                        "base64": "{{ device.as3.irules.internal_pool_by_sni | b64encode }}"
+                    }
+                }
+            },
+            "external": {
+                "class": "Application",
+                "template": "generic",
+                "dmz-ingress-sni": {
+                    "policyFirewallEnforced": {
+                        "use": "/Common/Shared/sccaBaselineAFMPolicyHTTP"
+                    },
+                    "policyFirewallStaged": {
+                        "use": "/Common/Shared/sccaBaselineAFMPolicyHTTP"
+                    },
+                    "layer4": "tcp",
+                    "securityLogProfiles": [
+                        {
+                            "bigip": "/Common/local-dos"
+                        }
+                    ],
+                    "translateServerAddress": false,
+                    "translateServerPort": false,
+                    "class": "Service_HTTPS",
+                    "profileDOS": {
+                        "bigip": "/Common/dos"
+                    },
+                    "profileHTTP": {
+                        "bigip": "/Common/http"
+                    },
+                    "serverTLS": {
+                        "bigip": "/Common/clientssl"
+                    },
+                    "profileTCP": {
+                        "bigip": "/Common/f5-tcp-progressive"
+                    },
+                    "virtualAddresses": [
+                        "{{item.ip}}"
+                    ],
+                    "virtualPort": {{item.port}},
+                    "snat": "none",
+                    "iRules": [
+                         "pool_by_sni"
+                    ]
+                },
+                "dmz-dtls_vpn": {
+                    "profileL4": "basic",
+                    "class": "Service_L4",
+                    "virtualAddresses": [
+                        "192.168.1.250"
+                    ],
+                    "virtualPort": 4433,
+                    "allowVlans":[
+                        {"bigip": "/Common/external"}
+                    ],
+                    "layer4": "udp",
+                    "pool": "vpn_dtls_pool"
+                },
+                "vpn_dtls_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 4433,
+                            "serverAddresses": [
+                                "192.168.10.154"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "vpn_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.10.154"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "portal_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.1.124"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "beta_portal_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.10.11"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "social_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.10.15"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "ontarget_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.10.17"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "bwapp_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.10.18"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "default_pool": {
+                    "members": [
+                        {
+                            "addressDiscovery": "static",
+                            "servicePort": 443,
+                            "serverAddresses": [
+                                "192.168.1.131"
+                            ]
+                        }
+                    ],
+                    "class": "Pool"
+                },
+                "pool_by_sni": {
+                    "class": "iRule",
+                    "iRule": {
+                        "base64": "{{ device.as3.irules.pool_by_sni | b64encode }}"
+                    }
+                }
+            }
+    }
+    }
+}
