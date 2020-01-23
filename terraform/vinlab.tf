@@ -48,3 +48,9 @@ module "gcp" {
     projectPrefix = "${var.projectPrefix}"
     service_accounts = "${var.gcp_service_accounts}"
 }
+
+# Deploy ansible test Module
+module "test" {
+  source   = "./test"
+
+}

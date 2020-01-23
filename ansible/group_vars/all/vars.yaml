@@ -12,3 +12,5 @@ bigiq:
   password: "{{vault_bigiq_password}}"
   host: "192.168.20.128"
   licensepool: "bigip_best_50"
+ansible_connection: "ssh"
+ansible_user: "root"

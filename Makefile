@@ -1,20 +1,64 @@
-.PHONY: build ansible terraform
+.PHONY: build test run shell
 
+export DIR = $(shell pwd)
+export WORK_DIR = $(shell dirname ${DIR})
+export CONTAINER_IMAGE = 'vin-lab-super-netops'
+
+default: build test
+
+dev: build shell
+
+run: build test init plan apply
 
 build:
-	cd ./terraform/ && $(MAKE) build
-	cd ./ansible/ && $(MAKE) build
+	docker build -t ${CONTAINER_IMAGE} .
 
-ansibleShell:
-	cd ./ansible/ && $(MAKE) shell
-terraformShell:
-	cd ./terraform/ && $(MAKE) shell
+shell:
+	@echo "shell ${WORK_DIR}"
+	@docker run --rm -it \
+	--volume ${DIR}:/workspace \
+	--volume ${DIR}/ansible/context:/workspace/ansible/context \
+	--volume ${DIR}/ansible/roles:/workspace/ansible/roles \
+	--volume ${DIR}/ansible/playbooks:/workspace/ansible/playbooks \
+	--volume ${DIR}/ansible/scripts:/workspace/ansible/scripts \
+	--volume ${DIR}/ansible/collections:/workspace/ansible/collections \
+	--volume ${DIR}/ansible/hosts:/workspace/ansible/hosts \
+	--volume ${DIR}/ansible/host_vars:/workspace/ansible/host_vars \
+	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}:/root/.ssh/${SSH_KEY_NAME}:ro \
+	-e SSH_KEY_NAME=${SSH_KEY_NAME} \
+	-e ANSIBLE_VAULT_PASSWORD=${ANSIBLE_VAULT_PASSWORD} \
+	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
+	-e ARM_CLIENT_SECRET=${ARM_CLIENT_SECRET} \
+	-e ARM_SUBSCRIPTION_ID=${ARM_SUBSCRIPTION_ID} \
+	-e ARM_TENANT_ID=${ARM_TENANT_ID} \
+	-e GCP_SA_FILE=${GCP_SA_FILE} \
+	-e GCP_PROJECT_ID=${GCP_PROJECT_ID} \
+	-e GCP_REGION=${GCP_REGION} \
+	-v ${SSH_KEY_DIR}/:/root/.ssh/:ro \
+	-v ${DIR}/creds/gcp:/creds/gcp:ro \
+	${CONTAINER_IMAGE} \
 
-ansible:
-	cd ./ansible/ && $(MAKE) run
+test: test1 test2 test3 test4
 
-terraform:
-	cd ./terraform/ && $(MAKE) run
-
-destroy:
-	cd ./terraform/ && $(MAKE) destroy
+test1:
+	@echo "python test"
+	@docker run --rm -it \
+	${CONTAINER_IMAGE} \
+	bash -c "python --version"
+test2:
+	@echo "ansible test"
+	@docker run --rm -it \
+	${CONTAINER_IMAGE} \
+	bash -c "ansible --version"
+test3:
+	@echo "terraform test"
+	@docker run --rm -it \
+	--volume ${DIR}:/workspace \
+	${CONTAINER_IMAGE} \
+	bash -c "terraform --version "
+test4:
+	@echo "terraform + ansible test"
+	@docker run --rm -it \
+	--volume ${DIR}:/workspace \
+	${CONTAINER_IMAGE} \
+	bash -c "terraform apply --target module.test --auto-approve"
