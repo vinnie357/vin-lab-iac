@@ -256,14 +256,22 @@ https://www.hashicorp.com/blog/announcing-the-vault-helm-chart/
 https://github.com/hashicorp/vault-helm
 
 # setup
-. .env_vars_helper.sh
-. ansible/scripts/.vault.setup.sh
 first run:
+```bash
 make dev
 terraform init
-terraform pla\
-terraform apply --target module.test --auto-approve
-ansible-vault view ../ansible/group_vars/all/vault.yaml --vault-password-file ../ansible/scripts/.vault_pass.sh
+cd ..
+. .env_vars_helper.sh
+cd ansible/
+. scripts/.vault.setup.sh
+cd ../terraform/
+exit
+make test
+```
 
 after:
+```bash
 make shell
+terraform plan
+terraform apply
+```
