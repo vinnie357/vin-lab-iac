@@ -22,6 +22,19 @@
                         "bigip": "/Common/default.key"
                     }
                 },
+                "certificate_wildcard": {
+                    "class": "Certificate",
+                    "certificate": {{device.as3.certificates.wildcard.cert}},
+                    "privateKey": {{device.as3.certificates.wildcard.key}},
+                    "chainCA": {{device.as3.certificates.wildcard.chain}}
+                },
+                "wildcard": {
+                    "class": "TLS_Server",
+                    "certificates": [{
+                        "certificate": "certificate_wildcard"
+                    }],
+                    "ciphers": "DEFAULT"
+                },
                 "sccaBaselineAFMRuleList":{
                     "class": "Firewall_Rule_List",
                     "rules": [
@@ -96,8 +109,9 @@
                     "profileHTTP": {
                         "bigip": "/Common/http"
                     },
-                    "serverTLS": {
-                        "bigip": "/Common/clientssl"
+                    "serverTLS": "/Common/Shared/wildcard",
+                    "clientTLS": {
+                        "bigip": "/Common/serverssl-insecure-compatible"
                     },
                     "profileTCP": {
                         "bigip": "/Common/f5-tcp-progressive"
@@ -134,7 +148,10 @@
                             "bigip": "/Common/local-dos"
                         }
                     ],
-                    "translateServerAddress": false,
+                    "allowVlans":[
+                        {"bigip": "/Common/external"}
+                    ],
+                    "translateServerAddress": true,
                     "translateServerPort": false,
                     "class": "Service_HTTPS",
                     "profileDOS": {
@@ -143,8 +160,9 @@
                     "profileHTTP": {
                         "bigip": "/Common/http"
                     },
-                    "serverTLS": {
-                        "bigip": "/Common/clientssl"
+                    "serverTLS": "/Common/Shared/wildcard",
+                    "clientTLS": {
+                        "bigip": "/Common/serverssl-insecure-compatible"
                     },
                     "profileTCP": {
                         "bigip": "/Common/f5-tcp-progressive"

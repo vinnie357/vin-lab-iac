@@ -41,19 +41,11 @@ variable "vm_network_2" {
 }
 variable "vm_network_3" {
   description = "Network used for the vSphere virtual machines"
-  default = "192.168.3.0"
+  default = "any"
 }
 variable "vm_network_4" {
   description = "Network used for the vSphere virtual machines"
   default = "192.168.2.0"
-}
-variable "vm_network_5" {
-  description = "Network used for the vSphere virtual machines"
-  default = "192.168.10.0/24_labvirtuals_vlan10"
-}
-variable "vm_network_6" {
-  description = "Network used for the vSphere virtual machines"
-  default = "192.168.40.0/24_f5_ha_vlan40"
 }
 
 variable "vm_template" {

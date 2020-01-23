@@ -33,7 +33,7 @@ device:
               interface: "1.2"
               selfipnf: "192.168.3.248/24"
               selfipf: "192.168.3.250/24"
-              tagging: "{{'false'}}"
+              tagging: "{{'true'}}"
             internal:
               tag: 1
               interface: "1.3"
@@ -42,15 +42,15 @@ device:
               tagging: "{{'false'}}"
             virtuals:
               tag: 10
-              interface: "1.4"
+              interface: "1.2"
               selfipnf: "192.168.10.248/24"
               selfipf: "192.168.10.250/24"
-              tagging: "{{'false'}}"
+              tagging: "{{'true'}}"
             ha:
               tag: 40
-              interface: "1.5"
+              interface: "1.2"
               selfipnf: "192.168.4.248/24"
-              tagging: "{{'false'}}"
+              tagging: "{{'true'}}"
           routes:
             default:
               gateway: "192.168.1.1"
@@ -71,6 +71,11 @@ device:
           apm: "none"
           afm: "nominal"
   as3:
+    certificates:
+      wildcard:
+        cert: "{{vault_certificates.wildcard.cert | to_json}}"
+        key: "{{vault_certificates.wildcard.key | to_json}}"
+        chain: "{{vault_certificates.wildcard.chain | to_json}}"
     apps:
       - name: "dmz_ingress"
         template: "afm_as3"

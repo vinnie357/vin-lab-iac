@@ -37,14 +37,6 @@ data "vsphere_network" "network4" {
   name          = "${var.vm_network_4}"
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
-data "vsphere_network" "network5" {
-  name          = "${var.vm_network_5}"
-  datacenter_id = "${data.vsphere_datacenter.dc.id}"
-}
-data "vsphere_network" "network6" {
-  name          = "${var.vm_network_6}"
-  datacenter_id = "${data.vsphere_datacenter.dc.id}"
-}
 
 data "vsphere_virtual_machine" "template_from_ovf" {
   name          = "${var.vm_ovf}"
@@ -168,14 +160,6 @@ resource "vsphere_virtual_machine" "afm-01" {
     network_id   = "${data.vsphere_network.network4.id}"
     adapter_type = "${data.vsphere_virtual_machine.template_from_ovf.network_interface_types[0]}"
   }
-  network_interface {
-    network_id   = "${data.vsphere_network.network5.id}"
-    adapter_type = "${data.vsphere_virtual_machine.template_from_ovf.network_interface_types[0]}"
-  }
-  network_interface {
-    network_id   = "${data.vsphere_network.network6.id}"
-    adapter_type = "${data.vsphere_virtual_machine.template_from_ovf.network_interface_types[0]}"
-  }
   disk {
     # name             = "disk0"
     label            = "${var.vm_name}.vmdk"
@@ -199,8 +183,6 @@ resource "vsphere_virtual_machine" "afm-01" {
         ipv4_address = "${var.f5vm01_mgmt}"
         ipv4_netmask = "${var.vm_netmask}"
       }
-      network_interface {}
-      network_interface {}
       network_interface {}
       network_interface {}
       network_interface {}
@@ -262,14 +244,6 @@ resource "vsphere_virtual_machine" "afm-02" {
     network_id   = "${data.vsphere_network.network4.id}"
     adapter_type = "${data.vsphere_virtual_machine.template_from_ovf.network_interface_types[0]}"
   }
-  network_interface {
-    network_id   = "${data.vsphere_network.network5.id}"
-    adapter_type = "${data.vsphere_virtual_machine.template_from_ovf.network_interface_types[0]}"
-  }
-  network_interface {
-    network_id   = "${data.vsphere_network.network6.id}"
-    adapter_type = "${data.vsphere_virtual_machine.template_from_ovf.network_interface_types[0]}"
-  }
   disk {
     # name             = "disk0"
     label            = "${var.vm_name}.vmdk"
@@ -293,8 +267,6 @@ resource "vsphere_virtual_machine" "afm-02" {
         ipv4_address = "${var.f5vm02_mgmt}"
         ipv4_netmask = "${var.vm_netmask}"
       }
-      network_interface {}
-      network_interface {}
       network_interface {}
       network_interface {}
       network_interface {}
