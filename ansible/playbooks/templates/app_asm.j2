@@ -1,0 +1,63 @@
+{ 
+    "$schema": "https://raw.githubusercontent.com/F5Networks/f5-appsvcs-extension/master/schema/latest/as3-schema-3.10.0-5.json",
+    "class": "AS3",
+    "declaration": {
+        "class": "ADC",
+        "schemaVersion": "3.10.0",
+        "id": "001",
+        "label": "vpn update",
+        "{{item.name}}": {
+            "class": "Tenant",
+            "application": {
+                "class": "Application",
+                "template": "generic",
+                "https": {
+                    "class": "Service_HTTPS",
+                    "virtualPort": 443,
+                    "virtualAddresses": [
+                        "{{item.virtualaddress}}"
+                    ],
+                    "serverTLS": "webtls",
+                    "profileHTTP": {
+                        "use": "http_profile"
+                    },
+                },
+                "http_profile": {
+                    "class": "HTTP_Profile",
+                    "hstsInsert": {{item.http.options.hstsInsert}},
+                    "hstsIncludeSubdomains": {{item.http.options.hstsIncludeSubdomains}} ,
+                    "hstsPeriod": {{item.http.options.hstsPeriod}},
+                    "serverHeaderValue": {{item.http.options.serverHeaderValue}}
+                },
+                "webtls": {
+                    "class": "TLS_Server",
+                    "ciphers": "{{item.ciphers}}",
+                    "certificates": [{
+                        "certificate": "webcert"
+                    }]
+                },
+                "webcert": {
+                    "class": "Certificate",
+                    "certificate": {{device.as3.certificates.webcert.cert}},
+                    "privateKey": {{device.as3.certificates.webcert.key}},
+                    "chainCA": {{device.as3.certificates.webcert.chain}}
+                },
+                "dtls": {
+                    "class": "Service_UDP",
+                    "virtualPort": 4433,
+                    "serverTLS": "webtls",
+                    "virtualAddresses": [
+                        "{{item.virtualaddress}}"
+                    ]
+                },
+                "snat_pool": {
+                    "class": "SNAT_Pool",
+                    "label": "webtop snat pool",
+                    "snatAddresses": [
+                        "{{item.snatpool.addresses}}"
+                    ]
+                }
+            }
+        }
+    }
+}
