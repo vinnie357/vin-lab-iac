@@ -145,8 +145,8 @@ DO_URL='${DO_onboard_URL}'
 DO_FN=$(basename "$DO_URL")
 AS3_URL='${AS3_URL}'
 AS3_FN=$(basename "$AS3_URL")
-#atc="f5-declarative-onboarding f5-appsvcs-extension f5-telemetry-streaming"
-atc="f5-declarative-onboarding f5-appsvcs-extension"
+atc="f5-declarative-onboarding f5-appsvcs-extension f5-telemetry-streaming f5-cloud-failover-extension"
+#atc="f5-declarative-onboarding f5-appsvcs-extension"
 # constants
 mgmt_port=`tmsh list sys httpd ssl-port | grep ssl-port | sed 's/ssl-port //;s/ //g'`
 authUrl="/mgmt/shared/authn/login"
@@ -162,6 +162,9 @@ as3CheckUrl="/mgmt/shared/appsvcs/info"
 # ts
 tsUrl="/mgmt/shared/telemetry/declare"
 tsCheckUrl="/mgmt/shared/telemetry/info" 
+# cloud failover ext
+cfUrl="/mgmt/shared/cloud-failover/declare"
+cfCheckUrl="/mgmt/shared/cloud-failover/info"
 # declaration content
 cat > /config/do1.json <<EOF
 ${DO1_Document}
@@ -201,7 +204,11 @@ for tool in $atc
 do
     
     echo "downloading $tool"
-    files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+    if [ $tool == "f5-cloud-failover-extension" ]; then
+        files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/f5devcentral/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+    else
+        files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+    fi
     for file in $files
     do
     echo "download: $file"
@@ -362,13 +369,30 @@ function checkTS() {
     count=0
     while [ $count -le 4 ]
     do
-    tsStatus=$(curl -i -u $CREDS http://localhost:8100$tsCheckUrl | grep HTTP | awk '{print $2}')
+    tsStatus=$(curl -si -u $CREDS http://localhost:8100$tsCheckUrl | grep HTTP | awk '{print $2}')
     if [[ $tsStatus == "200" ]]; then
         version=$(restcurl -u $CREDS -X GET $tsCheckUrl | jq -r .version)
         echo "Telemetry Streaming $version online "
         break
     else
         echo "TS Status $tsStatus"
+        count=$[$count+1]
+    fi
+    sleep 10
+    done
+}
+function checkCF() {
+    # Check CF Ready
+    count=0
+    while [ $count -le 4 ]
+    do
+    cfStatus=$(curl -si -u $CREDS http://localhost:8100$cfCheckUrl | grep HTTP | awk '{print $2}')
+    if [[ $cfStatus == "200" ]]; then
+        version=$(restcurl -u $CREDS -X GET $cfCheckUrl | jq -r .version)
+        echo "Cloud failover $version online "
+        break
+    else
+        echo "Cloud Failover Status $tsStatus"
         count=$[$count+1]
     fi
     sleep 10
@@ -712,13 +736,18 @@ do
 done
 #
 #
+# cleanup
+## remove declarations
+# rm -f /config/do1.json
+# rm -f /config/do2.json
+# rm -f /config/as3.json
+## disable/replace default admin account
+# echo  -e "create cli transaction;
+# modify /sys db systemauth.primaryadminuser value $admin_username;
+# submit cli transaction" | tmsh -q
 echo  -e 'create cli transaction;
 modify sys management-route default mtu 1460
 submit cli transaction' | tmsh -q
 tmsh save sys config
 echo "timestamp end: $(date)"
 echo "setup complete $(timer "$(($(date +%s) - $startTime))")"
-# remove declarations
-# rm -f /config/do1.json
-# rm -f /config/do2.json
-# rm -f /config/as3.json

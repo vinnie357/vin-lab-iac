@@ -382,3 +382,39 @@ oauth?
 token=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' -H 'Metadata-Flavor: Google' | jq -r .access_token )
 sdToken=$(echo "$token" | base64)
 $echo "$sdToken"
+
+# cloud failover
+https://clouddocs.f5.com/products/extensions/f5-cloud-failover/latest/userguide/gcp.html
+```json
+{
+    "class": "Cloud_Failover",
+    "environment": "gcp",
+    "externalStorage": {
+        "scopingTags": {
+            "f5_cloud_failover_label": "mydeployment"
+        }
+    },
+    "failoverAddresses": {
+        "scopingTags": {
+            "f5_cloud_failover_label": "mydeployment"
+        }
+    },
+    "failoverRoutes": {
+        "scopingTags": {
+            "f5_cloud_failover_label": "mydeployment"
+        },
+        "scopingAddressRanges": [
+            {
+                "range": "192.168.1.0/24"
+            }
+        ],
+        "defaultNextHopAddresses": {
+            "discoveryType": "static",
+            "items": [
+                "192.0.2.10",
+                "192.0.2.11"
+            ]
+        }
+    }
+}
+```

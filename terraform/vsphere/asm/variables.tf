@@ -51,7 +51,8 @@ variable "vm_network_4" {
 
 variable "vm_template" {
   description = "Template used to create the vSphere virtual machines"
-  default = "BIGIP-14.1.2.1-0.0.4.ALL"
+#   default = "BIGIP-14.1.2.1-0.0.4.ALL"
+  default ="BIGIP-15.1.0-0.0.31"
 }
 
 variable "vm_linked_clone" {
@@ -106,7 +107,8 @@ variable "vm_count" {
 
 variable "vm_ovf" {
   description = "vmware ovf already on vcenter"
-  default = "BIGIP-14.1.2.1-0.0.4.ALL"
+#   default = "BIGIP-14.1.2.1-0.0.4.ALL"
+  default ="BIGIP-15.1.0-0.0.31"
 }
 
 variable "vm_admin_password" {

@@ -4,11 +4,64 @@
 - ansible
 ### requirements
 - docker
-- vcenter
-- big-iq
 
+### licensing options
+- bigiq
+- payg
+- byol
+
+Per Provider Overview: 
+
+<!-- ![alt text][overview] -->
+
+[overview]: images/vinlab-overview.png "overview"
+---
+# desired state per provider
+- edge
+    - high avaliabilty
+    - firewall
+    - ipi
+    - dos
+    - decryption
+- internal
+    - high avaliabilty
+    - load balancing
+    - waf
+    - bot detection
+    - access control
+    - service discovery
+    - api protection
+    - api gateway
+- services
+    - kubernetes
+    - legacy application servers
+    - gitlab
+    - jenkins for infrastructure
+    - jenkins for applications
+    - vault
+---
+workspace: 
+
+<!-- ![alt text][workspace] -->
+
+[workspace]: images/vinlab-on-prem.png "workspace"
+
+# desired state workspace
+- workstations
+    - docker
+        - linux
+        - windows
+- scm
+    - git any flavor
+- secrets
+    - cloud kvm
+    - hashicorp vault
+- pipelines
+    - same docker as workstations
+    - builds to prod
 # Ansible
-# check inventory
+```bash
+## check inventory
 ansible-inventory --list -i inventory.vmware.yml --vault-password-file scripts/.vault_pass.sh
 
 # test play with inventory
@@ -16,16 +69,21 @@ ansible-playbook playbooks/test-inventory.yaml -i vinlab.vmware.yaml --vault-pas
 
 # ansible playbooks
 make ansible ARGS="item.yaml"
+
 ## shell
 make ansibleShell
+
 ## run
 ansible-playbook playbooks/deploy.yaml --vault-password-file scripts/.vault_pass.sh --extra-vars "@context/item.yaml"
+
 ## awx
 ansible-playbook playbooks/deploy.yaml --vault-password-file scripts/.vault_pass.sh --extra-vars "@context/awx.yaml"
+
 ## afm
 ansible-playbook playbooks/deploy.yaml --vault-password-file scripts/.vault_pass.sh --extra-vars "@context/afm.yaml"
-
+```
 # terraform
+```bash
 ## shell
 make terraformShell
 
@@ -40,8 +98,10 @@ make apply
 
 ### specific env
 terraform apply -target module.vsphere -var-file="creds.tfvars"
+
 ### apply specific resource
 terraform apply -target module.vsphere.module.awx
+
 ### destroy specific resource
 terraform destroy -target module.vsphere.module.awx
 
@@ -63,7 +123,9 @@ terraform.tfvars
 # terrform structure
 variables.tf
 things.tf
-
+```
+# bigip image builder:
+https://github.com/f5devcentral/f5-bigip-image-generator
 
 # vmware ova to template
 https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ve-setup-vmware-esxi-13-1-0/3.html
@@ -136,8 +198,8 @@ shutdown -r now
 ```
 
 ## centos8 template edits
-### create your user and add ssh key
-centos/youraccount
+- create your user and add ssh key
+- centos/youraccount
 ### disable virtulization
 ```bash
 systemctl disable libvirtd.service                                                                                                                                       
@@ -176,7 +238,8 @@ sudo dnf module install nodejs -y
 ### awx
 /root/.awx/awxcompose/
 
-
+# playbooks
+```bash
 ## AWX
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/awx.yaml
 ## K8S
@@ -189,10 +252,11 @@ ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/asm.yaml
 ## nfs
 ansible-playbook -i vinlab.vmware.yml --vault-password-file scripts/.vault_pass.sh playbooks/nfs/main.yaml
-
+```
 
 
 # kubespray
+```bash
 ## missing
 ### user config
 mkdir -p $HOME/.kube
@@ -207,8 +271,10 @@ echo 'alias k=kubectl' >>~/.bashrc
 echo 'complete -F __start_kubectl k' >>~/.bashrc
 ### nfs utils
 sudo yum install nfs-utils -y
+```
 ### helm3
-helm3
+```bash
+# helm3
 curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 
 helm repo add  stable https://kubernetes-charts.storage.googleapis.com/
@@ -232,9 +298,10 @@ kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storagec
 test pvc with grafana:
 helm install --namespace default --name-template grafana stable/grafana --set persistence.enabled=true --set persistence.type=pvc --set persistence.size=1Gi --set persistence.storageClassName=nfs-client
 kubectl get pvc
-
+```
 ## 1.16
 ## work around for api change in 1.16
+```bash
 /etc/kubernetes/manifests/kube-apiserver.yaml
 
 spec:
@@ -243,19 +310,22 @@ spec:
     - 
 kubectl -n kube-system delete pod kube-apiserver-whatever kube-controller-manager-whatever
 kubectl -n kube-system delete pod kube-apiserver-k8s-1-dev kube-controller-manager-k8s-1-dev
-
+```
 # GCE
-machine type
+```bash
+# machine type
 image name
 gcloud compute images list --project f5-7626-networks-public | grep payg | grep 15-0-1-1-0-0-3
 gcloud compute images list --project f5-7626-networks-public | grep byol | grep 15-0-1-1-0-0-3
-
+```
 # vault helm
 https://www.terraform.io/docs/providers/helm/index.html
+
 https://www.hashicorp.com/blog/announcing-the-vault-helm-chart/
+
 https://github.com/hashicorp/vault-helm
 
-# setup
+# setup lab
 first run:
 ```bash
 make dev
@@ -275,3 +345,8 @@ make shell
 terraform plan
 terraform apply
 ```
+
+----
+
+# manual ansible in tf container
+ansible-playbook --vault-password-file scripts/.vault_pass.sh playbooks/asm.yaml
