@@ -97,6 +97,8 @@ RUN apk update && apk add bash curl jq \
 COPY --from=terraform /terraform /usr/local/bin/terraform
 COPY --from=ansible /etc/ansible /etc/ansible
 COPY --from=ansible /usr/bin/ansible* /usr/local/bin/
+COPY --from=ansible /usr/bin/ssh /usr/local/bin/ssh
+COPY --from=ansible /usr/bin/ssh-* /usr/local/bin/
 COPY --from=ansible /usr/lib/python3.8/site-packages/ /usr/lib/python3.8/site-packages/
 
 

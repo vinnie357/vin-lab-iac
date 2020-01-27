@@ -34,9 +34,10 @@ shell:
 	-e GCP_SA_FILE=${GCP_SA_FILE} \
 	-e GCP_PROJECT_ID=${GCP_PROJECT_ID} \
 	-e GCP_REGION=${GCP_REGION} \
-	-v ${SSH_KEY_DIR}/:/root/.ssh/:ro \
+	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}:/root/.ssh/${SSH_KEY_NAME}:ro \
 	-v ${DIR}/creds/gcp:/creds/gcp:ro \
 	${CONTAINER_IMAGE} \
+	bash -c ". ../ansible/scripts/.ssh_key.sh && bash"
 
 test: test1 test2 test3 test4
 

@@ -165,6 +165,23 @@ resource "google_compute_instance" "vm_instance" {
     scopes = [ "storage-ro", "logging-write", "monitoring-write", "monitoring", "pubsub", "service-management" , "service-control" ]
     # scopes = [ "storage-ro"]
   }
+#     provisioner "local-exec" {
+#     command = <<-EOF
+#       ansible-playbook  --version
+#     EOF
+#   }
+# # Copies the script file to /tmp/script.sh
+#   provisioner "file" {
+#     source      = "script.sh"
+#     destination = "/tmp/script.sh"
+#   }
+
+#   provisioner "remote-exec" {
+#     inline = [
+#       "chmod +x /tmp/script.sh",
+#       "/tmp/script.sh args",
+#     ]
+#   }
 }
 # resource "google_storage_bucket" "instance-store-1" {
 #   name     = "${google_compute_instance.vm_instance.0.name}-storage"
@@ -201,7 +218,7 @@ bucket = "${google_storage_bucket.bigip-ha.name}"
 }
 resource "google_storage_bucket_object" "bigip-2" {
 name = "bigip-2"
-content = "${google_compute_instance.vm_instance.1.network_interface.2.network_ip}"
+content = "${var.vm_count >= 2 ? "${google_compute_instance.vm_instance.1.network_interface.2.network_ip}" : "none" }"
 bucket = "${google_storage_bucket.bigip-ha.name}"
 }
 
@@ -216,8 +233,8 @@ bucket = "${google_storage_bucket.bigip-ha.name}"
 output "f5vm01_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.0.network_interface.0.access_config.0.nat_ip}" }
 output "f5vm01_app_public_ip" { value = "${google_compute_instance.vm_instance.0.network_interface.1.access_config.0.nat_ip}" }
 
-output "f5vm02_mgmt_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.0.access_config.0.nat_ip}" }
-output "f5vm02_app_public_ip" { value = "${google_compute_instance.vm_instance.1.network_interface.1.access_config.0.nat_ip}" }
+output "f5vm02_mgmt_public_ip" { value = "${var.vm_count >= 2 ? "${google_compute_instance.vm_instance.1.network_interface.0.access_config.0.nat_ip}" : "none"}"}
+output "f5vm02_app_public_ip" { value = "${var.vm_count >= 2 ? "${google_compute_instance.vm_instance.1.network_interface.1.access_config.0.nat_ip}" : "none" }"}
 
 # // A variable for extracting the external ip of the instance
 # output "ip" {
