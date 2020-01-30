@@ -24,7 +24,9 @@ shell:
 	--volume ${DIR}/ansible/collections:/workspace/ansible/collections \
 	--volume ${DIR}/ansible/hosts:/workspace/ansible/hosts \
 	--volume ${DIR}/ansible/host_vars:/workspace/ansible/host_vars \
+	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}.pub:/root/.ssh/${SSH_KEY_NAME}.pub:ro \
 	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}:/root/.ssh/${SSH_KEY_NAME}:ro \
+	-v ${DIR}/creds/gcp:/creds/gcp:ro \
 	-e SSH_KEY_NAME=${SSH_KEY_NAME} \
 	-e ANSIBLE_VAULT_PASSWORD=${ANSIBLE_VAULT_PASSWORD} \
 	-e ARM_CLIENT_ID=${ARM_CLIENT_ID} \
@@ -34,8 +36,6 @@ shell:
 	-e GCP_SA_FILE=${GCP_SA_FILE} \
 	-e GCP_PROJECT_ID=${GCP_PROJECT_ID} \
 	-e GCP_REGION=${GCP_REGION} \
-	-v ${SSH_KEY_DIR}/${SSH_KEY_NAME}:/root/.ssh/${SSH_KEY_NAME}:ro \
-	-v ${DIR}/creds/gcp:/creds/gcp:ro \
 	${CONTAINER_IMAGE} \
 	bash -c ". ../ansible/scripts/.ssh_key.sh && bash"
 

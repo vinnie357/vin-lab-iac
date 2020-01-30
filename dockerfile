@@ -95,7 +95,9 @@ RUN echo "**** install Python ****" && \
 RUN apk update && apk add bash curl jq \
 && rm -rf /var/cache/apk/*
 COPY --from=terraform /terraform /usr/local/bin/terraform
-COPY --from=ansible /etc/ansible /etc/ansible
+COPY --from=ansible /etc/ansible/ /etc/ansible/
+COPY --from=ansible /root/.ansible/roles /etc/ansible/roles
+COPY --from=ansible /root/.ansible/collections/ansible_collections/geerlingguy/k8s/roles /etc/ansible/collections/ansible_collections/geerlingguy/k8s/roles
 COPY --from=ansible /usr/bin/ansible* /usr/local/bin/
 COPY --from=ansible /usr/bin/ssh /usr/local/bin/ssh
 COPY --from=ansible /usr/bin/ssh-* /usr/local/bin/
