@@ -159,6 +159,7 @@ doTaskUrl="/mgmt/shared/declarative-onboarding/task"
 # as3
 as3Url="/mgmt/shared/appsvcs/declare"
 as3CheckUrl="/mgmt/shared/appsvcs/info"
+as3TaskUrl="/mgmt/shared/appsvcs/task/"
 # ts
 tsUrl="/mgmt/shared/telemetry/declare"
 tsCheckUrl="/mgmt/shared/telemetry/info" 
@@ -199,15 +200,48 @@ do
   sleep 10
 done
 # download latest atc tools
-
+toolsList=$(cat -<<EOF
+{
+  "tools": [
+      {
+        "name": "f5-declarative-onboarding",
+        "version": "${doVersion}",
+        "url": "${doExternalDeclarationUrl}"
+      },
+      {
+        "name": "f5-appsvcs-extension",
+        "version": "${as3Version}",
+        "url": "${as3ExternalDeclarationUrl}"
+      },
+      {
+        "name": "f5-telemetry-streaming",
+        "version": "${tsVersion}",
+        "url": "${tsExternalDeclarationUrl}"
+      },
+      {
+        "name": "f5-cloud-failover-extension",
+        "version": "${cfVersion}",
+        "url": "${cfExternalDeclarationUrl}"
+      }
+  ]
+}
+EOF
+)
+function getAtc () {
+atc=$(echo $toolsList | jq -r .tools[].name)
 for tool in $atc
 do
-    
-    echo "downloading $tool"
-    if [ $tool == "f5-cloud-failover-extension" ]; then
-        files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/f5devcentral/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+    version=$(echo $toolsList | jq -r ".tools[]| select(.name| contains (\"$tool\")).version")
+    if [ $version == "latest" ]; then
+        path=''
     else
-        files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+        path='tags/v'
+    fi
+    echo "downloading $tool, $version"
+    if [ $tool == "f5-cloud-failover-extension" ]; then
+        files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/f5devcentral/$tool/releases/$path$version | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
+    else
+        files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/$path$version | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
     fi
     for file in $files
     do
@@ -218,6 +252,8 @@ do
     result=$(/usr/bin/curl -Lsk  $file -o /var/config/rest/downloads/$name)
     done
 done
+}
+getAtc
 
 # install atc tools
 rpms=$(find $rpmFilePath -name "*.rpm" -type f)
@@ -666,35 +702,44 @@ function runAS3 () {
             # check task code
         while true
         do
-            status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$taskId | jq -r '.results[].message')
-            case $status in
+            status=$(restcurl -s -u $CREDS $as3TaskUrl/$taskId | jq ".items[] | select(.id | contains (\"$taskId\")) | .results")
+            # codes=$(echo "$status" | jq .[].code)
+            messages=$(echo "$status" | jq -r .[].message)
+            tenants=$(echo "$status" | jq .[].tenant)
+            case $messages in
+            *Error*)
+                # error
+                echo -e "Error: $taskId status: $messages tenants: $tenants "
+                break
+                ;;
+            *failed*)
+                # failed
+                echo -e "failed: $taskId status: $messages tenants: $tenants "
+                break
+                ;;
             *success*)
                 # successful!
-                echo " $taskId status: $status "
+                echo -e "success: $taskId status: $messages tenants: $tenants "
                 break 3
                 ;;
             no*change)
                 # finished
-                echo " $taskId status: $status "
+                echo -e "no change: $taskId status: $messages tenants: $tenants "
                 break 3
                 ;;
             in*progress)
                 # in progress
-                echo "Running: $taskId status: $status "
+                echo -e "Running: $taskId status: $messages tenants: $tenants "
                 sleep 60
                 ;;
-            Error*)
-                # error
-                echo "Error: $taskId status: $status "
-                ;;
-            
             *)
             # other
-            echo "status: $status"
+            echo "status: $messages"
             debug=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$taskId | jq .)
             echo "debug: $debug"
             error=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$taskId | jq -r '.results[].message')
             echo "Other: $taskId, $error"
+            break
             ;;
             esac
         done
@@ -723,9 +768,23 @@ do
     as3Status=$(checkAS3)
     echo "AS3 check status: $as3Status"
     if [[ $as3Status == *"online"* ]]; then
-        echo "running as3"
-        runAS3
-        break
+            echo "running as3"
+            runAS3
+            echo "done with as3"
+            results=$(restcurl -u $CREDS $as3TaskUrl | jq '.items[] | .id, .results')
+            echo "as3 results: $results"
+            break
+        # if [ $deviceId == 1 ]; then
+        #     echo "running as3"
+        #     runAS3
+        #     echo "done with as3"
+        #     results=$(restcurl -u $CREDS $as3TaskUrl | jq '.items[] | .id, .results')
+        #     echo "as3 results: $results"
+        #     break
+        # else
+        #     echo "Not posting as3 device $deviceid not primary"
+        #     break
+        # fi
     elif [ $count -le 2 ]; then
         echo "Status code: $as3Status  As3 not ready yet..."
         count=$[$count+1]
