@@ -17,10 +17,10 @@ variable "vsphere_folder_env" {
   
 }
 
-
 #=========================#
 # vSphere virtual machine #
 #=========================#
+
 variable "vm_tags_application" {
   description = "application name tag"
 }
@@ -28,6 +28,8 @@ variable "vm_tags_application" {
 variable "vm_tags_environment" {
   description = "environment name"
 }
+
+
 variable "vm_datastore" {
   description = "Datastore used for the vSphere virtual machines"
   default = "synology2_ssd"
@@ -40,9 +42,9 @@ variable "vm_network" {
 
 variable "vm_template" {
   description = "Template used to create the vSphere virtual machines"
-#   default = "ubuntu-18.04"
 #   default = "centos8"
-  default = "centos7"
+  #default = "centos7"
+  default = "ubuntu-18.04"
 }
 
 variable "vm_linked_clone" {
@@ -77,20 +79,20 @@ variable "vm_domain" {
 
 variable "vm_cpu" {
   description = "Number of vCPU for the vSphere virtual machines"
-  default = "4"
+  default = "2"
 }
 
 variable "vm_ram" {
   description = "Amount of RAM for the vSphere virtual machines (example: 2048)"
-  default = "16384"
+  default = "4096"
 }
 
 variable "vm_name" {
   description = "The name of the vSphere virtual machines and the hostname of the machine"
-  default = "kubespray"
+  default = "letsencrypt"
 }
 
 variable "vm_count" {
   description = "The number of virtual machine instances"
-  default = "3"
+  default = "1"
 }

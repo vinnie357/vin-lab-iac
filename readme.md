@@ -129,6 +129,7 @@ https://github.com/f5devcentral/f5-bigip-image-generator
 
 # vmware ova to template
 https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ve-setup-vmware-esxi-13-1-0/3.html
+Login and delete the REST ID, SSH keys, etc. per the article : https://support.f5.com/csp/article/K44134742 
 ## OVA to OVF instructions
 Use tar to uncompact your OVA
 ```bash
