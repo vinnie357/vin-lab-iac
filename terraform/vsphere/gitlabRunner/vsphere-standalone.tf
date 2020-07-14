@@ -6,8 +6,8 @@ data vsphere_datacenter dc {
   name = var.vsphere_datacenter
 }
 
-resource vsphere_folder docker {
-  path          = "${var.vsphere_folder_env}/docker"
+resource vsphere_folder gitlabRunner {
+  path          = "${var.vsphere_folder_env}/gitlabRunner"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
@@ -36,7 +36,7 @@ data vsphere_virtual_machine template {
 # vSphere Resources
 #===============================================================================
 resource vsphere_tag Application {
-  name        = "docker"
+  name        = "gitlabRunner"
   category_id = var.vm_tags_application
   description = "Managed by Terraform"
 }
@@ -47,7 +47,7 @@ resource vsphere_virtual_machine standalone {
   name             = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}.${var.vm_domain}"
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_id     = data.vsphere_datastore.datastore.id
-  folder           = vsphere_folder.docker.path
+  folder           = vsphere_folder.gitlabRunner.path
   num_cpus = var.vm_cpu
   memory   = var.vm_ram
   guest_id = data.vsphere_virtual_machine.template.guest_id

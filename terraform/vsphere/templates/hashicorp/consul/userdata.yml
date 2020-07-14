@@ -1,0 +1,8 @@
+#cloud-config 
+packages:
+  - nfs-kernel-server
+  - docker
+  - docker.io
+runcmd:
+    - mkdir -p /mnt/sharedfolder
+    - curl -sSL https://raw.githubusercontent.com/hashicorp/f5-terraform-consul-sd-webinar/master/scripts/consul.sh | sh - #Install consul

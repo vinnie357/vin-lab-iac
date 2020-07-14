@@ -1,5 +1,5 @@
 # Create a Public IP for bigip1
-resource "azurerm_public_ip" "bigip1_public_ip" {
+resource azurerm_public_ip bigip1_public_ip {
   name                      = "${var.owner}-bigip1-public-ip"
   location                  = var.azure_region
   resource_group_name       = var.azure_rg_name
@@ -13,7 +13,7 @@ resource "azurerm_public_ip" "bigip1_public_ip" {
 
 
 # Create the 1nic interface for BIG-IP 01
-resource "azurerm_network_interface" "bigip1_nic" {
+resource azurerm_network_interface bigip1_nic {
   name                      = "${var.owner}-bigip1-mgmt-nic"
   location                  = var.azure_region
   resource_group_name       = var.azure_rg_name
@@ -33,7 +33,7 @@ resource "azurerm_network_interface" "bigip1_nic" {
 }
 
 # Install AS3 and DO on BIG-IP
-data "template_file" "f5_bigip_onboard" {
+data template_file f5_bigip_onboard {
   template = file("${var.templates}/f5_onboard.tpl")
 
   vars = {
@@ -44,7 +44,7 @@ data "template_file" "f5_bigip_onboard" {
   }
 }
 # Create F5 BIGIP1
-resource "azurerm_virtual_machine" "f5-bigip1" {
+resource azurerm_virtual_machine f5-bigip1 {
   name                         = "${var.owner}-f5-bigip1-afm"
   location                     = var.azure_region
   resource_group_name          = var.azure_rg_name
@@ -83,7 +83,7 @@ resource "azurerm_virtual_machine" "f5-bigip1" {
     disable_password_authentication = true
     ssh_keys {
         path     = "/home/${var.f5_username}/.ssh/authorized_keys"
-        key_data = "${file("${var.f5_ssh_publickey}")}"
+        key_data = file(var.f5_ssh_publickey)
         
     }
   }
@@ -105,7 +105,7 @@ resource "azurerm_virtual_machine" "f5-bigip1" {
 }
 
 # Run Startup Script
-resource "azurerm_virtual_machine_extension" "f5-bigip1-run-startup-cmd" {
+resource azurerm_virtual_machine_extension f5-bigip1-run-startup-cmd {
   name                 = "${var.owner}-f5-bigip1-run-startup-cmd"
   depends_on           = [azurerm_virtual_machine.f5-bigip1]
   location             = var.azure_region
@@ -131,7 +131,7 @@ resource "azurerm_virtual_machine_extension" "f5-bigip1-run-startup-cmd" {
 }
 
 #Needed to retrieve the F5 public IP when doing dynamic IP allocation
-data "azurerm_public_ip" "bigip1-public-ip" {
+data azurerm_public_ip bigip1-public-ip {
   name                = azurerm_public_ip.bigip1_public_ip.name
   resource_group_name = var.azure_rg_name
 
@@ -139,7 +139,7 @@ data "azurerm_public_ip" "bigip1-public-ip" {
 }
 
 # Security group
-resource "azurerm_network_security_group" "bigip_sg" {
+resource azurerm_network_security_group bigip_sg {
   name                = "${var.owner}-bigip-sg"
   location            = var.azure_region
   resource_group_name = var.azure_rg_name

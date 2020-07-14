@@ -6,7 +6,7 @@
 # }
 
 #application template
-data "template_file" "dockerApp" {
+data template_file dockerApp {
   template = "${file("${path.module}/app.tpl")}"
   vars ={
       port = "4000"
@@ -14,7 +14,7 @@ data "template_file" "dockerApp" {
   }
 }
 
-resource "google_compute_instance" "vm_instance" {
+resource google_compute_instance vm_instance {
   name         = "${var.projectPrefix}terraform-app-instance"
   machine_type = "f1-micro"
 
@@ -31,12 +31,12 @@ resource "google_compute_instance" "vm_instance" {
     juiceShop = "dev"
     demoApp = "dev"
  }
- metadata_startup_script = "${data.template_file.dockerApp.rendered}"
+ metadata_startup_script = data.template_file.dockerApp.rendered
   
   network_interface {
     # A default network is created for all GCP projects
-    network    = "${var.int_vpc.name}"
-    subnetwork = "${var.int_subnet.name}"
+    network    = var.int_vpc.name
+    subnetwork = var.int_subnet.name
     network_ip = "10.0.20.200"
     # network = "${google_compute_network.vpc_network.self_link}"
     # enabling access config requests a public ip

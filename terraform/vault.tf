@@ -1,4 +1,4 @@
-# provider "helm" {
+# provider helm {
 #   kubernetes {
 #     host     = "https://104.196.242.174"
 #     username = "ClusterMaster"
@@ -10,7 +10,7 @@
 #   }
 # }
 
-# resource "helm_release" "myvault" {
+# resource helm_release myvault {
 #   name  = "myvault"
 #   chart = "hashicorp/vault-helm"
 

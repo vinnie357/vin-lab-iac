@@ -124,12 +124,138 @@ terraform.tfvars
 variables.tf
 things.tf
 ```
+# https://cloud-images.ubuntu.com/releases/
+#https://github.com/linoproject/terraform
+# ubuntu to template vmware
+failed guest customization on ubuntu and vmware 6.5
+https://kb.vmware.com/s/article/56409 
+
+https://jimangel.io/post/create-a-vm-template-ubuntu-18.04/
+https://bugs.launchpad.net/ubuntu/+source/open-vm-tools/+bug/1793715
+Workaround:
+
+1. set cloud-init or perl scripts as the customization engine
+   1) if you want to set cloud-init as the customization engine by:
+      Set “disable_vmware_customization: false" in "/etc/cloud.cfg"
+
+   2) if you want to set perl script as customization engine, you should disable or remove
+      cloud-init
+
+      Disable cloud-init service by running this command:
+      sudo touch /etc/cloud/cloud-init.disabled
+
+      Remove cloud-init package and purge the config files by running these commands:
+      sudo apt-get purge cloud-init
+
+2. Open the /usr/lib/tmpfiles.d/tmp.conf file.
+   Go to the line 11 and add the prefix #.
+
+   or example:
+   #D /tmp 1777 root root -
+
+3. If you have open-vm-tools installed, open the /lib/systemd/system/open-vm-tools.service file.
+   Add “After=dbus.service” under [Unit].
+
+```bash
+disable_vmware_customization: false /etc/cloud.cfg
+/usr/lib/tmpfiles.d/tmp.conf
+#D /tmp 1777 root root -
+/lib/systemd/system/open-vm-tools.service
+After=dbus.service under [Unit]
+```
+
+```bash
+#!/bin/bash
+sudo apt -y update
+sudo apt -y upgrade
+sudo apt -y install open-vm-tools
+#Stop services for cleanup
+sudo service rsyslog stop
+
+#clear audit logs
+if [ -f /var/log/wtmp ]; then
+    truncate -s0 /var/log/wtmp
+fi
+if [ -f /var/log/lastlog ]; then
+    truncate -s0 /var/log/lastlog
+fi
+
+#cleanup /tmp directories
+rm -rf /tmp/*
+rm -rf /var/tmp/*
+
+#cleanup current ssh keys
+rm -f /etc/ssh/ssh_host_*
+
+#add check for ssh keys on reboot...regenerate if neccessary
+cat << 'EOL' | sudo tee /etc/rc.local
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+# dynamically create hostname (optional)
+#if hostname | grep localhost; then
+#    hostnamectl set-hostname "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 13 ; echo '')"
+#fi
+test -f /etc/ssh/ssh_host_dsa_key || dpkg-reconfigure openssh-server
+exit 0
+EOL
+
+# make sure the script is executable
+chmod +x /etc/rc.local
+
+#reset hostname
+# prevent cloudconfig from preserving the original hostname
+sed -i 's/preserve_hostname: false/preserve_hostname: true/g' /etc/cloud/cloud.cfg
+truncate -s0 /etc/hostname
+hostnamectl set-hostname localhost
+
+#cleanup apt
+apt clean
+
+# set dhcp to use mac - this is a little bit of a hack but I need this to be placed under the active nic settings
+# also look in /etc/netplan for other config files
+sed -i 's/optional: true/dhcp-identifier: mac/g' /etc/netplan/50-cloud-init.yaml
+
+# cleans out all of the cloud-init cache / logs - this is mainly cleaning out networking info
+sudo cloud-init clean --logs
+
+#cleanup shell history
+cat /dev/null > ~/.bash_history && history -c
+history -w
+
+#shutdown
+shutdown -h now
+```
+
 # bigip image builder:
 https://github.com/f5devcentral/f5-bigip-image-generator
 
-# vmware ova to template
+#  BIG-IP vmware ova to template
 https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ve-setup-vmware-esxi-13-1-0/3.html
 Login and delete the REST ID, SSH keys, etc. per the article : https://support.f5.com/csp/article/K44134742 
+
+```bash
+rm -f /config/f5-rest-device-id
+rm -f /config/ssh/ssh_host_* 
+rm -f /shared/ssh/ssh_host_*
+rm -f /config/bigip.license
+echo "root:default" | chpasswd
+echo "admin:admin" | chpasswd
+cat > /root/.ssh/authorized_keys <<EOF 
+ssh-rsa ABGHS YOUR PUBLIC KEY HERE
+EOF
+shutdown -h now
+```
+
 ## OVA to OVF instructions
 Use tar to uncompact your OVA
 ```bash
