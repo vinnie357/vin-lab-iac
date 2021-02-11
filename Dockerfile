@@ -1,5 +1,8 @@
+#
+# terraform and ansible dev container
+#
 # Setup build arguments with default versions
-ARG TERRAFORM_VERSION=0.12.20
+ARG TERRAFORM_VERSION=0.13.0
 ARG ANSIBLE_VERSION=latest
 ARG PYTHON_VERSION=3.8
 
@@ -22,6 +25,7 @@ ARG PYTHON_VERSION
 RUN set -ex \
  && apk --update add rpm python3 openssl ca-certificates openssh-client bash jq git libxml2 libxslt-dev libxml2-dev \
  && apk --update add --virtual build-dependencies python3-dev libffi-dev openssl-dev build-base \
+ && python3 -m ensurepip \
  && pip3 install --upgrade pip pycrypto cffi \
  && pip3 install ansible \
  && pip3 install jinja2==2.10.1 \
@@ -64,6 +68,8 @@ RUN set -ex \
 
 #final image
 FROM alpine:latest
+# terraform and ansible dev container
+LABEL maintainer="v.mazza@f5.com"
 ARG PYTHON_VERSION
 
 #env vars

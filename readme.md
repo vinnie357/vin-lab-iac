@@ -477,3 +477,50 @@ terraform apply
 
 # manual ansible in tf container
 ansible-playbook --vault-password-file scripts/.vault_pass.sh playbooks/asm.yaml
+
+
+
+
+# newish workflow
+
+## repositories:
+
+domain-infra - tf
+  - branch-env
+  - branch-env
+application - tf
+  - branch-env
+  - branch-env
+
+example:
+
+  vin-lab.com
+  - prod
+  - dev
+
+  minecraft
+  - prod
+  - dev
+
+  graphana
+  - prod
+  - dev
+
+## ci
+
+  - runners for as3?
+    - f5-cli runner example with git-lab-ci or github actions
+    - terraform using as3 providers
+  - ansible?
+    jenkins to run ansible plays?
+  - docker
+    - run calls to fast?
+
+  deploy to devices from infra
+  deploy to big-iq applications with as3
+  deploy to fast-docker target iq or big-ip
+
+## ubuntu cloud-init
+
+https://blog.linoproject.net/cloud-init-with-terraform-in-vsphere-environment/
+https://github.com/linoproject/terraform/tree/master/vsphere-cloudinit

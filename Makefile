@@ -2,7 +2,9 @@
 
 export DIR = $(shell pwd)
 export WORK_DIR = $(shell dirname ${DIR})
-export CONTAINER_IMAGE = 'vin-lab-super-netops'
+export CONTAINER_IMAGE = vin-lab-super-netops
+export TERRAFORM_VERSION = 0.14.0
+export ANSIBLE_VERSION = latest
 
 default: build test
 
@@ -11,7 +13,7 @@ dev: build shell
 run: build test init plan apply
 
 build:
-	docker build -t ${CONTAINER_IMAGE} .
+	docker build --build-arg ANSIBLE_VERSION=${ANSIBLE_VERSION} --build-arg TERRAFORM_VERSION=${TERRAFORM_VERSION} -t ${CONTAINER_IMAGE} .
 
 gcp:
 	@echo "gcp ${WORK_DIR}"

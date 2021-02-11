@@ -41,7 +41,28 @@ resource vsphere_tag Application {
   category_id = var.vm_tags_application
   description = "Managed by Terraform"
 }
+# https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/cloudinit_config
 
+data template_file metadata {
+  template = "${file("${path.root}/vsphere/templates/ubuntu/metadata.yml")}"
+    vars = {
+    HOST=var.vm_name
+  }
+}
+data template_file userdata {
+  template = "${file("${path.root}/vsphere/templates/f5/nginx/controller_userdata.yml.tpl")}"
+    vars = {
+    #CONSUL_VERSION="1.7.2"
+  }
+}
+data template_file kickstart {
+  template = "${file("${path.root}/vsphere/templates/ubuntu/kickstart.yml")}"
+    vars = {
+    USER="vinnie"
+    PASS=var.adminPass
+    PUBKEY=var.adminPubKey
+  }
+}
 resource vsphere_virtual_machine standalone {
   count            = var.vm_count
   name             = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}.${var.vm_domain}"
@@ -70,26 +91,21 @@ resource vsphere_virtual_machine standalone {
   cdrom {
     client_device = true
   }
+  extra_config = {
+    "guestinfo.metadata"          = base64encode(data.template_file.metadata.rendered)
+    "guestinfo.metadata.encoding" = "base64"
+    "guestinfo.userdata"          = base64encode(data.template_file.userdata.rendered)
+    "guestinfo.userdata.encoding" = "base64"
+  }
+  vapp {
+    properties ={
+      hostname = var.vm_name
+      instance-id = "id-ovf-${var.vm_name}"
+      user-data = base64encode(data.template_file.kickstart.rendered)
+    }
+  }
 
   clone {
     template_uuid = data.vsphere_virtual_machine.template.id
-    linked_clone  = var.vm_linked_clone
-
-    customize {
-      timeout = "20"
-
-      linux_options {
-        host_name = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}"
-        domain    = var.vm_domain
-      }
-
-      network_interface {
-        # ipv4_address = var.vm_ip
-        # ipv4_netmask = var.vm_netmask
-      }
-
-      ipv4_gateway    = var.vm_gateway
-      dns_server_list = [var.vm_dns]
-    }
   }
 }

@@ -71,183 +71,186 @@ resource vsphere_tag prod {
 
 # Deploy Awx machine
 module awx {
-  source   = "./awx"
+  source = "./awx"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy okd machine
 module okd {
-  source   = "./okd"
+  source = "./okd"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy nfs machine
 module nfs {
-  source   = "./nfs"
+  source = "./nfs"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy k8s cluster
 module k8s {
-  source   = "./k8s"
+  source = "./k8s"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy k8s cluster for kubespray
 module kubespray {
-  source   = "./kubespray"
+  source = "./kubespray"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy legacy machine
 module legacy {
-  source   = "./legacy"
+  source = "./legacy"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy nginx controller
 module controller {
-  source   = "./controller"
+  source = "./controller"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
+  # vm info
+  adminPubKey = var.adminPubKey
+  adminPass   = var.adminPass
 }
 # Deploy afm cluster
 module afm {
-  source   = "./afm"
+  source = "./afm"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
-  vm_admin_password = var.bigip_admin_password
-  vm_root_password = var.bigip_root_password
+  vm_admin_password   = var.bigip_admin_password
+  vm_root_password    = var.bigip_root_password
 }
 
 # Deploy asm cluster
 module asm {
-  source   = "./asm"
+  source = "./asm"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy letsencrypt machine
 module letsencrypt {
-  source   = "./letsencrypt"
+  source = "./letsencrypt"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy docker machine
 module docker {
-  source   = "./docker"
+  source = "./docker"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy gitlabRunner machine
 module gitlabRunner {
-  source   = "./gitlabRunner"
+  source = "./gitlabRunner"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy latest BIG-IP machine
 module latest {
-  source   = "./latest"
+  source = "./latest"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
 }
 
 # Deploy consul machine
 module consul {
-  source   = "./consul"
+  source = "./consul"
   #====================#
   # vCenter connection #
   #====================#
   vsphere_datacenter = var.vsphere_datacenter
   # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env = var.vsphere_folder_dev
+  vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
   # admin
   adminPubKey = var.adminPubKey
-  adminPass = var.adminPass
+  adminPass   = var.adminPass
 }

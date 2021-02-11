@@ -4,7 +4,7 @@
 
 variable vsphere_user {
   description = "vSphere user name"
-  default = "svc-terraform@vinlab.com"
+  default     = "svc-terraform@vinlab.com"
 }
 
 variable vsphere_password {
@@ -13,17 +13,17 @@ variable vsphere_password {
 
 variable vsphere_vcenter {
   description = "vCenter server FQDN or IP"
-  default = "192.168.3.10"
+  default     = "192.168.3.10"
 }
 
 variable vsphere_unverified_ssl {
   description = "Is the vCenter using a self signed certificate (true/false)"
-  default = "true"
+  default     = "true"
 }
 
 variable vsphere_datacenter {
   description = "vSphere datacenter"
-  default = "vin-lab.com"
+  default     = "vin-lab.com"
 }
 
 # variable vsphere_cluster {

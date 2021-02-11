@@ -2,8 +2,8 @@
 # vinlab             #
 #====================#
 variable projectPrefix {
-    description = "prefix for resources"
-    default = "vinlab-"
+  description = "prefix for resources"
+  default     = "vinlab-"
 }
 
 
@@ -53,16 +53,16 @@ variable GCP_PROJECT_ID {
 }
 
 variable GCP_SSH_KEY_PATH {
-    description = " path to ssh public key for vms"
-  
+  description = " path to ssh public key for vms"
+
 }
 
 variable gcp_service_accounts {
   type = map
   default = {
-      storage = "default-compute@developer.gserviceaccount.com"
-      compute = "default-compute@developer.gserviceaccount.com"
-    }
+    storage = "default-compute@developer.gserviceaccount.com"
+    compute = "default-compute@developer.gserviceaccount.com"
+  }
 }
 
 #====================#

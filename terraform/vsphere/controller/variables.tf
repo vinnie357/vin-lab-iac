@@ -17,7 +17,13 @@ variable vsphere_folder_env {
   
 }
 
-
+## admin
+variable adminPass {
+  description = "default admin pass"
+}
+variable adminPubKey {
+  description = "admin public ssh key"
+}
 #=========================#
 # vSphere virtual machine #
 #=========================#
@@ -40,7 +46,8 @@ variable vm_network {
 
 variable vm_template {
   description = "Template used to create the vSphere virtual machines"
-  default = "ubuntu-18.04"
+  // default = "ubuntu-18.04"
+  default = "ubuntu-20.04"
 #   default = "ubuntu-19.10"
   #default = "centos8"
 }
