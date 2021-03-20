@@ -3,5 +3,5 @@ context:
     tasks:
         vmware: true
         provision: true
-    f5:    
+    f5:
       ova: "BIGIP-15.0.1-0.0.11.ALL-vmware.ova"

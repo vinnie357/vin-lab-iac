@@ -157,7 +157,7 @@ sed -i "s/-external-virtual-address-/$INT2ADDRESS/g" /config/as3.json
 function runDO() {
     count=0
     while [ $count -le 4 ]
-        do 
+        do
         # make task
         task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100$doUrl -d @/config/$1 | jq -r .id)
         taskId=$(echo $task)
@@ -178,7 +178,7 @@ function runDO() {
                 status=$(getDoStatus $taskId)
                 sleep 1
                 #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
-                case $status in 
+                case $status in
                 FINISHED)
                     # finished
                     echo " $taskId status: $status "
@@ -245,7 +245,7 @@ while [ $count -le 4 ]
     do
         doStatus=$(checkDO)
         echo "DO check status: $doStatus"
-    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then
         echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do1.json
@@ -256,7 +256,7 @@ while [ $count -le 4 ]
             echo "do results: $results"
             break
         fi
-    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then 
+    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then
         echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do2.json

@@ -8,5 +8,3 @@ device:
       type: "ovf"
     size: "dualcpu"
     folder: "/awx/dev"
-
-

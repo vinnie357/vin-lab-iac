@@ -6,15 +6,15 @@
 # }
 
 #application template
-data template_file dockerApp {
-  template = "${file("${path.module}/app.tpl")}"
-  vars ={
-      port = "4000"
-      ssl = true
+data "template_file" "dockerApp" {
+  template = file("${path.module}/app.tpl")
+  vars = {
+    port = "4000"
+    ssl  = true
   }
 }
 
-resource google_compute_instance vm_instance {
+resource "google_compute_instance" "vm_instance" {
   name         = "${var.projectPrefix}terraform-app-instance"
   machine_type = "f1-micro"
 
@@ -26,13 +26,13 @@ resource google_compute_instance vm_instance {
     }
   }
   metadata = {
-    ssh-keys = "${var.adminAccountName}:${file(var.gce_ssh_pub_key_file)}"
+    ssh-keys               = "${var.adminAccountName}:${file(var.gce_ssh_pub_key_file)}"
     block-project-ssh-keys = true
-    juiceShop = "dev"
-    demoApp = "dev"
- }
- metadata_startup_script = data.template_file.dockerApp.rendered
-  
+    juiceShop              = "dev"
+    demoApp                = "dev"
+  }
+  metadata_startup_script = data.template_file.dockerApp.rendered
+
   network_interface {
     # A default network is created for all GCP projects
     network    = var.int_vpc.name

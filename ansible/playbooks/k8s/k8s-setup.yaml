@@ -15,7 +15,7 @@
     #     name: centos
     #     password: "SHA512"
     #     state: present
-    #     shell: /bin/bash 
+    #     shell: /bin/bash
     #     system: no
     #     createhome: yes
     #     home: /home/centos
@@ -78,10 +78,10 @@
           kind: Policy
           rules:
           - level: Metadata
-    
+
     - name: pull kube images
       command: kubeadm config images pull
-    
+
     - name: initialize the cluster
       shell: kubeadm init --pod-network-cidr=10.244.0.0/16 >> cluster_initialized.txt
       args:
@@ -134,14 +134,14 @@
     - name: "CA Hash"
       shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
       register: K8S_MASTER_CA_HASH
-    
+
     - name: "Add K8S Token and Hash to dummy host"
       add_host:
         name:   "K8S_TOKEN_HOLDER"
         token:  "{{ K8S_TOKEN.stdout }}"
         hash:   "{{ K8S_MASTER_CA_HASH.stdout }}"
         join_command: "{{ join_command }}"
-## workers        
+## workers
 - hosts: ~k8s-[2:3]-*
   become: yes
   tasks:
@@ -188,5 +188,3 @@
   tasks:
     - name: helm init tiller
       command: helm init --service-account tiller --wait
-      
-      

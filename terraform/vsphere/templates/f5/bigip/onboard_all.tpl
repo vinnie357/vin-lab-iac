@@ -23,7 +23,7 @@ exec 1>$LOG_FILE 2>&1
 
 echo  "wait for mcpd"
 checks=0
-while [[ "$checks" -lt 120 ]]; do 
+while [[ "$checks" -lt 120 ]]; do
     echo "checking mcpd"
     tmsh -a show sys mcp-state field-fmt | grep -q running
    if [ $? == 0 ]; then
@@ -33,12 +33,12 @@ while [[ "$checks" -lt 120 ]]; do
    echo "mcpd not ready yet"
    let checks=checks+1
    sleep 10
-done 
+done
 
 function delay () {
 # $1 count #2 item
 count=0
-while [[ $count  -lt $1 ]]; do 
+while [[ $count  -lt $1 ]]; do
     echo "still working... $2"
     sleep 1
     count=$[$count+1]
@@ -88,7 +88,7 @@ as3Url="/mgmt/shared/appsvcs/declare"
 as3CheckUrl="/mgmt/shared/appsvcs/info"
 # ts
 tsUrl="/mgmt/shared/telemetry/declare"
-tsCheckUrl="/mgmt/shared/telemetry/info" 
+tsCheckUrl="/mgmt/shared/telemetry/info"
 # declaration content
 cat > /config/do1.json <<EOF
 ${DO1_Document}
@@ -127,7 +127,7 @@ done
 
 for tool in $atc
 do
-    
+
     echo "downloading $tool"
     files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
     for file in $files
@@ -151,7 +151,7 @@ do
      while true
      do
         iappApiStatus=$(curl -i -u $CREDS  http://localhost:8100$rpmInstallUrl | grep HTTP | awk '{print $2}')
-        case $iappApiStatus in 
+        case $iappApiStatus in
             404)
                 echo "api not ready status: $iappApiStatus"
                 sleep 2
@@ -170,11 +170,11 @@ do
     done
   else
     echo " file: $filename not found"
-  fi 
+  fi
   while true
   do
     status=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq -r .status)
-    case $status in 
+    case $status in
         FINISHED)
             # finished
             echo " rpm: $filename task: $install status: $status"
@@ -293,7 +293,7 @@ function checkTS() {
 function runDO() {
     count=0
     while [ $count -le 4 ]
-        do 
+        do
         # make task
         task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100/mgmt/shared/declarative-onboarding -d @/config/$1 | jq -r .id)
         echo "starting DO task: $task"
@@ -309,7 +309,7 @@ function runDO() {
                 status=$(restcurl -u $CREDS $doTaskUrl/$task | jq -r .result.status)
                 sleep 1
                 #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
-                case $status in 
+                case $status in
                 FINISHED)
                     # finished
                     echo " $task status: $status "
@@ -375,7 +375,7 @@ count=0
 while [ $count -le 4 ]
     do
         doStatus=$(checkDO)
-    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then
         echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do1.json
@@ -386,7 +386,7 @@ while [ $count -le 4 ]
             echo "do results: $results"
             break
         fi
-    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then 
+    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then
         echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do2.json
@@ -439,7 +439,7 @@ function runAS3 () {
                 # error
                 echo "Error: $task status: $status "
                 ;;
-            
+
             *)
             # other
             echo "status: $status"

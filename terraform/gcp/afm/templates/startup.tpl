@@ -1,7 +1,7 @@
 #!/bin/bash
 if [ -f /config/startupFinished ]; then
    exit
-fi 
+fi
 if [ ! -f /config/cloud/gce/FIRST_BOOT_COMPLETE ]; then
 mkdir  -p /config/cloud/gce
 cat  <<EOF > /config/installCloudLibs.sh
@@ -17,12 +17,12 @@ while [ $checks -lt 120 ]; do echo checking mcpd
    echo mcpd not ready yet
    let checks=checks+1
    sleep 10
-done 
+done
 echo  loading verifyHash script
 if ! tmsh load sys config merge file /config/verifyHash; then
    echo cannot validate signature of /config/verifyHash
    exit
-fi 
+fi
 echo  loaded verifyHash
 declare  -a filesToVerify=("/config/cloud/f5-cloud-libs.tar.gz" "/config/cloud/f5-cloud-libs-gce.tar.gz" "/config/cloud/f5-appsvcs-3.5.1-5.noarch.rpm" "/config/cloud/f5.service_discovery.tmpl")
 for fileToVerify in "${filesToVerify[@]}"
@@ -33,7 +33,7 @@ do
        exit 1
    fi
    echo verified "$fileToVerify"
-done 
+done
 mkdir  -p /config/cloud/gce/node_modules/@f5devcentral
 echo  expanding f5-cloud-libs.tar.gz\n
 tar xvfz /config/cloud/f5-cloud-libs.tar.gz -C /config/cloud/gce/node_modules/@f5devcentral
@@ -135,7 +135,7 @@ do
    else
        error_exit "$LINENO: An error has occurred while executing $CMD. Aborting!"
    fi
-done 
+done
    wait_bigip_ready
    date
    ### START CUSTOM TMSH CONFIGURATION
@@ -186,7 +186,7 @@ nohup /config/installCloudLibs.sh >> /var/log/cloud/google/install.log < /dev/nu
 nohup /config/waitThenRun.sh f5-rest-node /config/cloud/gce/node_modules/@f5devcentral/f5-cloud-libs/scripts/runScript.js --file /config/cloud/gce/collect-interface.sh --cwd /config/cloud/gce -o /var/log/cloud/google/interface-config.log --signal INT_COLLECTION_DONE --log-level ' + str(context.properties['logLevel']) + ' >> /var/log/cloud/google/install.log < /dev/null
 nohup /config/waitThenRun.sh f5-rest-node /config/cloud/gce/node_modules/@f5devcentral/f5-cloud-libs/scripts/onboard.js --db provision.managementeth:eth1 --host localhost --wait-for INT_COLLECTION_DONE --signal FIRST_BOOT_COMPLETE --force-reboot >> /var/log/cloud/google/install.log < /dev/null
 else
-nohup /config/waitThenRun.sh f5-rest-node /config/cloud/gce/node_modules/@f5devcentral/f5-cloud-libs/scripts/onboard.js --host localhost --signal ONBOARD_DONE --port 443 --ssl-port ' + str(context.properties['mgmtGuiPort']) + ' -o /var/log/cloud/google/onboard.log --log-level ' + str(context.properties['logLevel']) + ' --install-ilx-package file:///config/cloud/f5-appsvcs-3.5.1-5.noarch.rpm ' + ntp_list + timezone + ' --modules ' + PROVISIONING_MODULES + SENDANALYTICS + ' >> /var/log/cloud/google/install.log < /dev/null 
+nohup /config/waitThenRun.sh f5-rest-node /config/cloud/gce/node_modules/@f5devcentral/f5-cloud-libs/scripts/onboard.js --host localhost --signal ONBOARD_DONE --port 443 --ssl-port ' + str(context.properties['mgmtGuiPort']) + ' -o /var/log/cloud/google/onboard.log --log-level ' + str(context.properties['logLevel']) + ' --install-ilx-package file:///config/cloud/f5-appsvcs-3.5.1-5.noarch.rpm ' + ntp_list + timezone + ' --modules ' + PROVISIONING_MODULES + SENDANALYTICS + ' >> /var/log/cloud/google/install.log < /dev/null
 nohup /config/waitThenRun.sh f5-rest-node /config/cloud/gce/node_modules/@f5devcentral/f5-cloud-libs/scripts/runScript.js --file /config/cloud/gce/custom-config.sh --cwd /config/cloud/gce -o /var/log/cloud/google/custom-config.log --wait-for ONBOARD_DONE --signal CUSTOM_CONFIG_DONE --log-level ' + str(context.properties['logLevel']) + ' >> /var/log/cloud/google/install.log < /dev/null
 touch /config/startupFinished
-fi 
+fi

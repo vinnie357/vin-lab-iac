@@ -16,7 +16,7 @@ exec 1>$LOG_FILE 2>&1
 function mcpdWait () {
     echo  "wait for mcpd"
     checks=0
-    while [[ "$checks" -lt 120 ]]; do 
+    while [[ "$checks" -lt 120 ]]; do
         echo "checking mcpd"
         tmsh -a show sys mcp-state field-fmt | grep -q running
     if [ $? == 0 ]; then
@@ -69,4 +69,4 @@ as3Url="/mgmt/shared/appsvcs/declare"
 as3CheckUrl="/mgmt/shared/appsvcs/info"
 # ts
 tsUrl="/mgmt/shared/telemetry/declare"
-tsCheckUrl="/mgmt/shared/telemetry/info" 
+tsCheckUrl="/mgmt/shared/telemetry/info"

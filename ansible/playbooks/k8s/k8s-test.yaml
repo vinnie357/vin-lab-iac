@@ -1,7 +1,7 @@
 #kubectl create deployment nginx --image=nginx
 #kubectl expose deploy nginx --port 80 --target-port 80 --type NodePort
 #kubectl delete service nginx
-#kubectl delete deployment nginx- 
+#kubectl delete deployment nginx-
 - hosts: ~k8s-1-*
   become: yes
   become_user: vinnie
@@ -17,7 +17,7 @@
     - name: gitlab helm charts
       helm:
         host: localhost
-        chart: 
+        chart:
           name: gitlab
           source:
             type: repo

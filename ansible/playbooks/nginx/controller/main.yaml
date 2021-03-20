@@ -1,16 +1,15 @@
 - hosts: controller
   pre_tasks:
   become: true
-- name: controller-dependencies 
+- name: controller-dependencies
   import_playbook: controller-centos.yaml
   when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red HatEnterprise Linux'
-- name: controller-dependencies 
+- name: controller-dependencies
   import_playbook: controller-ubuntu.yaml
   when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
-  vars: 
+  vars:
     ansible_distribution_major_version: "8"
     docker_edition: 'ce'
     docker_package: "docker-{{ docker_edition }}"
 - name: controller-install
   import_playbook: controller-install.yaml
-

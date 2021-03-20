@@ -10,7 +10,7 @@
   - name: disable swap
     shell: |
       swapoff -a
-      sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab   
+      sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab
   - name: Create a logical volume the size of all remaining space in the volume group
     lvol:
       vg: ubuntu-vg

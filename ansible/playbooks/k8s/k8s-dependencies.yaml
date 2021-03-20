@@ -26,14 +26,14 @@
       service:
         name: docker
         state: started
-    
+
     - name: disable swap
       shell: |
         swapoff -a
-        sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab  
-    
+        sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab
+
     - name: load netfilter probe specifically
-      command: modprobe br_netfilter 
+      command: modprobe br_netfilter
 
     - name: disable SELinux blocking
       selinux:
@@ -69,14 +69,14 @@
       yum:
         state: present
         update_cache: true
-        name: 
+        name:
           - nfs-utils
           - kubelet-{{k8s_version}}
           - kubeadm-{{k8s_version}}
     - name: add kube tools kubectl
       yum:
         state: present
-        name: 
+        name:
           - kubectl-{{k8s_version}}
           - bash-completion
       when: "'k8s-1-' in inventory_hostname"

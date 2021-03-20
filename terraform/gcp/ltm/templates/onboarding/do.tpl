@@ -32,7 +32,7 @@ function waitDO() {
 function runDO() {
     CNT=0
     while [ $CNT -le 10 ]
-        do 
+        do
         # make task
         task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100/mgmt/shared/declarative-onboarding -d @/config/$1 | jq -r .id)
         echo "starting task: $task"
@@ -45,7 +45,7 @@ function runDO() {
             status=$(restcurl -u $CREDS /mgmt/shared/declarative-onboarding/task/$task | jq -r .result.status)
             sleep 1
             #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
-            case $status in 
+            case $status in
             FINISHED)
                 # finished
                 echo " $task status: $status "
@@ -80,7 +80,7 @@ function runDO() {
                 else
                     echo "other $status"
                     CNT=$[$CNT+1]
-                fi 
+                fi
                 ;;
             FAILED)
                 # failed
@@ -118,7 +118,7 @@ function runDO() {
 }
 
 # run DO
-if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then
     echo "running do for 01 in:$deviceId"
     runDO do1.json
 elif [[ "$doStatus" = *"online"* ]]; then
@@ -127,4 +127,3 @@ elif [[ "$doStatus" = *"online"* ]]; then
 else
     echo "DO not online status: $doStatus"
 fi
-

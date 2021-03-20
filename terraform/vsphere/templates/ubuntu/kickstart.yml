@@ -1,4 +1,4 @@
-#cloud-config 
+#cloud-config
 chpasswd: #Change your local password here
     list: |
       ${USER}:${PASS}
@@ -13,7 +13,7 @@ users:
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     ssh_authorized_keys:
       - ${PUBKEY}
-system_info: 
+system_info:
   default_user:
     name: default-user
     lock_passwd: false

@@ -10,7 +10,7 @@
 - payg
 - byol
 
-Per Provider Overview: 
+Per Provider Overview:
 
 <!-- ![alt text][overview] -->
 
@@ -40,7 +40,7 @@ Per Provider Overview:
     - jenkins for applications
     - vault
 ---
-workspace: 
+workspace:
 
 <!-- ![alt text][workspace] -->
 
@@ -128,7 +128,7 @@ things.tf
 #https://github.com/linoproject/terraform
 # ubuntu to template vmware
 failed guest customization on ubuntu and vmware 6.5
-https://kb.vmware.com/s/article/56409 
+https://kb.vmware.com/s/article/56409
 
 https://jimangel.io/post/create-a-vm-template-ubuntu-18.04/
 https://bugs.launchpad.net/ubuntu/+source/open-vm-tools/+bug/1793715
@@ -241,16 +241,16 @@ https://github.com/f5devcentral/f5-bigip-image-generator
 
 #  BIG-IP vmware ova to template
 https://techdocs.f5.com/kb/en-us/products/big-ip_ltm/manuals/product/bigip-ve-setup-vmware-esxi-13-1-0/3.html
-Login and delete the REST ID, SSH keys, etc. per the article : https://support.f5.com/csp/article/K44134742 
+Login and delete the REST ID, SSH keys, etc. per the article : https://support.f5.com/csp/article/K44134742
 
 ```bash
 rm -f /config/f5-rest-device-id
-rm -f /config/ssh/ssh_host_* 
+rm -f /config/ssh/ssh_host_*
 rm -f /shared/ssh/ssh_host_*
 rm -f /config/bigip.license
 echo "root:default" | chpasswd
 echo "admin:admin" | chpasswd
-cat > /root/.ssh/authorized_keys <<EOF 
+cat > /root/.ssh/authorized_keys <<EOF
 ssh-rsa ABGHS YOUR PUBLIC KEY HERE
 EOF
 shutdown -h now
@@ -265,7 +265,7 @@ You should now have 5 files with format: <name_of_ova_file.ovf, .cert, .mf, disk
 
 Modify the .ovf file and add the following properties to <ProductSection>:
 ```bash
-<Category>Network properties</Category>  
+<Category>Network properties</Category>
   <Property ovf:key="net.mgmt.addr" ovf:type="string" ovf:value="" ovf:userConfigurable="true">
     <Label>mgmt-addr</Label>
     <Description>F5 BIG-IP VE's management address in the format of "IP/prefix"</Description>
@@ -289,7 +289,7 @@ modify ovas for custom IPs
 https://devcentral.f5.com/articles/ve-on-vmware-part-1-custom-properties-29787
 Common OVF Tool
 https://cot.readthedocs.io/en/latest/introduction.html
-example: 
+example:
 ```bash
 cot edit-properties source-filename.ova -p net.mgmt.addr=""+string -p net.mgmt.gw=""+string -p user.root.pwd=""+string -p user.admin.pwd=""+string -u -o destination-filename.ova
 
@@ -329,7 +329,7 @@ shutdown -r now
 - centos/youraccount
 ### disable virtulization
 ```bash
-systemctl disable libvirtd.service                                                                                                                                       
+systemctl disable libvirtd.service
 ```
 add ssh authorized keys
 ```bash
@@ -434,7 +434,7 @@ kubectl get pvc
 spec:
     ...
     - --runtime-config=apps/v1beta1=true,apps/v1beta2=true,extensions/v1beta1/daemonsets=true,extensions/v1beta1/deployments=true,extensions/v1beta1/replicasets=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/podsecuritypolicies=true
-    - 
+    -
 kubectl -n kube-system delete pod kube-apiserver-whatever kube-controller-manager-whatever
 kubectl -n kube-system delete pod kube-apiserver-k8s-1-dev kube-controller-manager-k8s-1-dev
 ```

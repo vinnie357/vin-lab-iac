@@ -3,7 +3,7 @@
 #===============================================================================
 #https://github.com/terraform-providers/terraform-provider-vsphere/releases
 
-provider vsphere {
+provider "vsphere" {
   # version        = "1.12.0"
   vsphere_server = var.vsphere_vcenter
   user           = var.vsphere_user
@@ -11,28 +11,28 @@ provider vsphere {
 
   allow_unverified_ssl = var.vsphere_unverified_ssl
 }
-data vsphere_datacenter dc {
+data "vsphere_datacenter" "dc" {
   name = var.vsphere_datacenter
 }
 
-resource vsphere_folder dev {
+resource "vsphere_folder" "dev" {
   path          = "dev"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
-resource vsphere_folder test {
+resource "vsphere_folder" "test" {
   path          = "test"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-resource vsphere_folder prod {
+resource "vsphere_folder" "prod" {
   path          = "prod"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 # tags
-resource vsphere_tag_category Application {
+resource "vsphere_tag_category" "Application" {
   name        = "Application"
   cardinality = "SINGLE"
   description = "Managed by Terraform"
@@ -42,7 +42,7 @@ resource vsphere_tag_category Application {
     "Datastore",
   ]
 }
-resource vsphere_tag_category Environment {
+resource "vsphere_tag_category" "Environment" {
   name        = "Environment"
   cardinality = "SINGLE"
   description = "Managed by Terraform"
@@ -52,17 +52,17 @@ resource vsphere_tag_category Environment {
     "Datastore",
   ]
 }
-resource vsphere_tag dev {
+resource "vsphere_tag" "dev" {
   name        = vsphere_folder.dev.path
   category_id = vsphere_tag_category.Environment.id
   description = "Managed by Terraform"
 }
-resource vsphere_tag test {
+resource "vsphere_tag" "test" {
   name        = vsphere_folder.test.path
   category_id = vsphere_tag_category.Environment.id
   description = "Managed by Terraform"
 }
-resource vsphere_tag prod {
+resource "vsphere_tag" "prod" {
   name        = vsphere_folder.prod.path
   category_id = vsphere_tag_category.Environment.id
   description = "Managed by Terraform"
@@ -70,7 +70,7 @@ resource vsphere_tag prod {
 
 
 # Deploy Awx machine
-module awx {
+module "awx" {
   source = "./awx"
   #====================#
   # vCenter connection #
@@ -83,7 +83,7 @@ module awx {
 }
 
 # Deploy okd machine
-module okd {
+module "okd" {
   source = "./okd"
   #====================#
   # vCenter connection #
@@ -96,7 +96,7 @@ module okd {
 }
 
 # Deploy nfs machine
-module nfs {
+module "nfs" {
   source = "./nfs"
   #====================#
   # vCenter connection #
@@ -109,7 +109,7 @@ module nfs {
 }
 
 # Deploy k8s cluster
-module k8s {
+module "k8s" {
   source = "./k8s"
   #====================#
   # vCenter connection #
@@ -121,7 +121,7 @@ module k8s {
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy k8s cluster for kubespray
-module kubespray {
+module "kubespray" {
   source = "./kubespray"
   #====================#
   # vCenter connection #
@@ -133,7 +133,7 @@ module kubespray {
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy legacy machine
-module legacy {
+module "legacy" {
   source = "./legacy"
   #====================#
   # vCenter connection #
@@ -145,7 +145,7 @@ module legacy {
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy nginx controller
-module controller {
+module "controller" {
   source = "./controller"
   #====================#
   # vCenter connection #
@@ -160,7 +160,7 @@ module controller {
   adminPass   = var.adminPass
 }
 # Deploy afm cluster
-module afm {
+module "afm" {
   source = "./afm"
   #====================#
   # vCenter connection #
@@ -175,7 +175,7 @@ module afm {
 }
 
 # Deploy asm cluster
-module asm {
+module "asm" {
   source = "./asm"
   #====================#
   # vCenter connection #
@@ -188,7 +188,7 @@ module asm {
 }
 
 # Deploy letsencrypt machine
-module letsencrypt {
+module "letsencrypt" {
   source = "./letsencrypt"
   #====================#
   # vCenter connection #
@@ -201,7 +201,7 @@ module letsencrypt {
 }
 
 # Deploy docker machine
-module docker {
+module "docker" {
   source = "./docker"
   #====================#
   # vCenter connection #
@@ -214,7 +214,7 @@ module docker {
 }
 
 # Deploy gitlabRunner machine
-module gitlabRunner {
+module "gitlabRunner" {
   source = "./gitlabRunner"
   #====================#
   # vCenter connection #
@@ -227,7 +227,7 @@ module gitlabRunner {
 }
 
 # Deploy latest BIG-IP machine
-module latest {
+module "latest" {
   source = "./latest"
   #====================#
   # vCenter connection #
@@ -240,7 +240,7 @@ module latest {
 }
 
 # Deploy consul machine
-module consul {
+module "consul" {
   source = "./consul"
   #====================#
   # vCenter connection #

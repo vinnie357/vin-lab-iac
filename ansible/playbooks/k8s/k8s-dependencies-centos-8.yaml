@@ -39,14 +39,14 @@
      service:
        name: docker
        state: started
-   
+
    - name: disable swap
      shell: |
        swapoff -a
-       sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab  
-   
+       sed -i 's/^\(.*swap.*\)$/#\1/' /etc/fstab
+
    - name: load netfilter probe specifically
-     command: modprobe br_netfilter 
+     command: modprobe br_netfilter
 
    - name: disable SELinux
      command: setenforce 0
@@ -74,12 +74,12 @@
       baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
       gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
       gpgcheck: yes
-   
+
    - name: add kube tools
      yum:
       state: present
       update_cache: true
-      name: 
+      name:
         - nfs-utils
         - kubelet-1.16.2
         - kubeadm-1.16.2
@@ -98,7 +98,7 @@
   #     name: centos
   #     password: "SHA512"
   #     state: present
-  #     shell: /bin/bash 
+  #     shell: /bin/bash
   #     system: no
   #     createhome: yes
   #     home: /home/centos

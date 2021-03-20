@@ -2,32 +2,32 @@
 #===============================================================================
 # vSphere Data
 #===============================================================================
-data vsphere_datacenter dc {
+data "vsphere_datacenter" "dc" {
   name = var.vsphere_datacenter
 }
 
-resource vsphere_folder k8s {
+resource "vsphere_folder" "k8s" {
   path          = "${var.vsphere_folder_env}/k8s"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_compute_cluster cluster {
+data "vsphere_compute_cluster" "cluster" {
   name          = var.vsphere_cluster
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_datastore datastore {
+data "vsphere_datastore" "datastore" {
   name          = var.vm_datastore
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_network network {
+data "vsphere_network" "network" {
   name          = var.vm_network
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_virtual_machine template {
+data "vsphere_virtual_machine" "template" {
   name          = var.vm_template
   datacenter_id = data.vsphere_datacenter.dc.id
 }
@@ -36,20 +36,20 @@ data vsphere_virtual_machine template {
 # vSphere Resources
 #===============================================================================
 
-resource vsphere_tag Application {
+resource "vsphere_tag" "Application" {
   name        = "k8s"
   category_id = var.vm_tags_application
   description = "Managed by Terraform"
 }
 
-resource vsphere_virtual_machine standalone {
+resource "vsphere_virtual_machine" "standalone" {
   count            = var.vm_count
   name             = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}.${var.vm_domain}"
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_id     = data.vsphere_datastore.datastore.id
-  folder           = vsphere_folder.k8s.path     
+  folder           = vsphere_folder.k8s.path
 
-  tags = [ vsphere_tag.Application.id,var.vm_tags_environment ]  
+  tags = [vsphere_tag.Application.id, var.vm_tags_environment]
 
   num_cpus = var.vm_cpu
   memory   = var.vm_ram

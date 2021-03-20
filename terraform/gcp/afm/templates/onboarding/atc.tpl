@@ -22,7 +22,7 @@ done
 
 for tool in $atc
 do
-    
+
     echo "downloading $tool"
     files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
     for file in $files
@@ -44,7 +44,7 @@ do
   while true
   do
     status=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq -r .status)
-    case $status in 
+    case $status in
         FINISHED)
             # finished
             echo " rpm: $filename task: $install status: $status"

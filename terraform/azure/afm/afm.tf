@@ -1,19 +1,19 @@
 # Create a Public IP for bigip1
-resource azurerm_public_ip bigip1_public_ip {
-  name                      = "${var.owner}-bigip1-public-ip"
-  location                  = var.azure_region
-  resource_group_name       = var.azure_rg_name
-  allocation_method         = "Dynamic"
+resource "azurerm_public_ip" "bigip1_public_ip" {
+  name                = "${var.owner}-bigip1-public-ip"
+  location            = var.azure_region
+  resource_group_name = var.azure_rg_name
+  allocation_method   = "Dynamic"
 
   tags = {
-    Name           = "${var.owner}-bigip1-public-ip"
-    owner          = var.owner
+    Name  = "${var.owner}-bigip1-public-ip"
+    owner = var.owner
   }
 }
 
 
 # Create the 1nic interface for BIG-IP 01
-resource azurerm_network_interface bigip1_nic {
+resource "azurerm_network_interface" "bigip1_nic" {
   name                      = "${var.owner}-bigip1-mgmt-nic"
   location                  = var.azure_region
   resource_group_name       = var.azure_rg_name
@@ -27,37 +27,37 @@ resource azurerm_network_interface bigip1_nic {
   }
 
   tags = {
-    Name           = "${var.owner}-bigip1-mgmt-nic"
-    owner          = var.owner
+    Name  = "${var.owner}-bigip1-mgmt-nic"
+    owner = var.owner
   }
 }
 
 # Install AS3 and DO on BIG-IP
-data template_file f5_bigip_onboard {
+data "template_file" "f5_bigip_onboard" {
   template = file("${var.templates}/f5_onboard.tpl")
 
   vars = {
-    DO_URL          = var.DO_URL
-    AS3_URL		      = var.AS3_URL
-    libs_dir		    = var.libs_dir
-    onboard_log		  = var.onboard_log
+    DO_URL      = var.DO_URL
+    AS3_URL     = var.AS3_URL
+    libs_dir    = var.libs_dir
+    onboard_log = var.onboard_log
   }
 }
 # Create F5 BIGIP1
-resource azurerm_virtual_machine f5-bigip1 {
+resource "azurerm_virtual_machine" "f5-bigip1" {
   name                         = "${var.owner}-f5-bigip1-afm"
   location                     = var.azure_region
   resource_group_name          = var.azure_rg_name
   primary_network_interface_id = azurerm_network_interface.bigip1_nic.id
   network_interface_ids        = [azurerm_network_interface.bigip1_nic.id]
   vm_size                      = var.f5_instance_type
-  
+
   # Uncomment this line to delete the OS disk automatically when deleting the VM
-   delete_os_disk_on_termination = true
+  delete_os_disk_on_termination = true
 
 
   # Uncomment this line to delete the data disks automatically when deleting the VM
-   delete_data_disks_on_termination = true
+  delete_data_disks_on_termination = true
 
   storage_image_reference {
     publisher = "f5-networks"
@@ -82,30 +82,30 @@ resource azurerm_virtual_machine f5-bigip1 {
   os_profile_linux_config {
     disable_password_authentication = true
     ssh_keys {
-        path     = "/home/${var.f5_username}/.ssh/authorized_keys"
-        key_data = file(var.f5_ssh_publickey)
-        
+      path     = "/home/${var.f5_username}/.ssh/authorized_keys"
+      key_data = file(var.f5_ssh_publickey)
+
     }
   }
-  
-#  os_profile_linux_config {
-#    disable_password_authentication = false
-#  }
+
+  #  os_profile_linux_config {
+  #    disable_password_authentication = false
+  #  }
 
   plan {
-    name          = var.f5_image_name
-    publisher     = "f5-networks"
-    product       = var.f5_product_name
+    name      = var.f5_image_name
+    publisher = "f5-networks"
+    product   = var.f5_product_name
   }
 
   tags = {
-    Name           = "${var.owner}-f5bigip1"
-    owner          = var.owner
+    Name  = "${var.owner}-f5bigip1"
+    owner = var.owner
   }
 }
 
 # Run Startup Script
-resource azurerm_virtual_machine_extension f5-bigip1-run-startup-cmd {
+resource "azurerm_virtual_machine_extension" "f5-bigip1-run-startup-cmd" {
   name                 = "${var.owner}-f5-bigip1-run-startup-cmd"
   depends_on           = [azurerm_virtual_machine.f5-bigip1]
   location             = var.azure_region
@@ -125,13 +125,13 @@ resource azurerm_virtual_machine_extension f5-bigip1-run-startup-cmd {
   SETTINGS
 
   tags = {
-    Name           = "${var.owner}-f5-bigip1-startup-cmd"
-    owner          = var.owner
+    Name  = "${var.owner}-f5-bigip1-startup-cmd"
+    owner = var.owner
   }
 }
 
 #Needed to retrieve the F5 public IP when doing dynamic IP allocation
-data azurerm_public_ip bigip1-public-ip {
+data "azurerm_public_ip" "bigip1-public-ip" {
   name                = azurerm_public_ip.bigip1_public_ip.name
   resource_group_name = var.azure_rg_name
 
@@ -139,7 +139,7 @@ data azurerm_public_ip bigip1-public-ip {
 }
 
 # Security group
-resource azurerm_network_security_group bigip_sg {
+resource "azurerm_network_security_group" "bigip_sg" {
   name                = "${var.owner}-bigip-sg"
   location            = var.azure_region
   resource_group_name = var.azure_rg_name
@@ -210,7 +210,7 @@ resource azurerm_network_security_group bigip_sg {
   }
 
   tags = {
-    Name           = "${var.owner}-bigip-sg"
-    owner          = var.owner
+    Name  = "${var.owner}-bigip-sg"
+    owner = var.owner
   }
 }

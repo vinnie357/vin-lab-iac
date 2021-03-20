@@ -35,12 +35,12 @@ while [ $checks -lt 120 ]; do echo checking mcpd
    echo mcpd not ready yet
    let checks=checks+1
    sleep 10
-done 
+done
 echo  loading verifyHash script
 if ! tmsh load sys config merge file /config/verifyHash; then
    echo cannot validate signature of /config/verifyHash
    exit
-fi 
+fi
 echo  loaded verifyHash
 filesToVerify="/config/cloud/f5-cloud-libs.tar.gz /config/cloud/f5-cloud-libs-gce.tar.gz /config/cloud/f5.service_discovery.tmpl"
 #declare  -a filesToVerify=('/config/cloud/f5-cloud-libs.tar.gz' '/config/cloud/f5-cloud-libs-gce.tar.gz' '/config/cloud/f5.service_discovery.tmpl')
@@ -52,7 +52,7 @@ do
        exit 1
    fi
    echo verified "$fileToVerify"
-done 
+done
 mkdir  -p /config/cloud/gce/node_modules/@f5devcentral
 echo  expanding f5-cloud-libs.tar.gz\n
 tar xvfz /config/cloud/f5-cloud-libs.tar.gz -C /config/cloud/gce/node_modules/@f5devcentral
@@ -96,7 +96,7 @@ deviceId=$(curl -s -f --retry 20 'http://metadata.google.internal/computeMetadat
 #
 echo  "wait for mcpd"
 checks=0
-while [[ "$checks" -lt 120 ]]; do 
+while [[ "$checks" -lt 120 ]]; do
     echo "checking mcpd"
     tmsh -a show sys mcp-state field-fmt | grep -q running
    if [ $? == 0 ]; then
@@ -106,12 +106,12 @@ while [[ "$checks" -lt 120 ]]; do
    echo "mcpd not ready yet"
    let checks=checks+1
    sleep 10
-done 
+done
 
 function delay () {
 # $1 count #2 item
 count=0
-while [[ $count  -lt $1 ]]; do 
+while [[ $count  -lt $1 ]]; do
     echo "still working... $2"
     sleep 1
     count=$[$count+1]
@@ -162,7 +162,7 @@ as3CheckUrl="/mgmt/shared/appsvcs/info"
 as3TaskUrl="/mgmt/shared/appsvcs/task/"
 # ts
 tsUrl="/mgmt/shared/telemetry/declare"
-tsCheckUrl="/mgmt/shared/telemetry/info" 
+tsCheckUrl="/mgmt/shared/telemetry/info"
 # cloud failover ext
 cfUrl="/mgmt/shared/cloud-failover/declare"
 cfCheckUrl="/mgmt/shared/cloud-failover/info"
@@ -266,7 +266,7 @@ do
      while true
      do
         iappApiStatus=$(curl -i -u $CREDS  http://localhost:8100$rpmInstallUrl | grep HTTP | awk '{print $2}')
-        case $iappApiStatus in 
+        case $iappApiStatus in
             404)
                 echo "api not ready status: $iappApiStatus"
                 sleep 2
@@ -285,11 +285,11 @@ do
     done
   else
     echo " file: $filename not found"
-  fi 
+  fi
   while true
   do
     status=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq -r .status)
-    case $status in 
+    case $status in
         FINISHED)
             # finished
             echo " rpm: $filename task: $install status: $status"
@@ -570,7 +570,7 @@ sed -i "s/-sd-sa-token-b64-/$token/g" /config/as3.json
 function runDO() {
     count=0
     while [ $count -le 4 ]
-        do 
+        do
         # make task
         task=$(curl -s -u $CREDS -H "Content-Type: Application/json" -H 'Expect:' -X POST http://localhost:8100$doUrl -d @/config/$1 | jq -r .id)
         taskId=$(echo $task)
@@ -591,7 +591,7 @@ function runDO() {
                 status=$(getDoStatus $taskId)
                 sleep 1
                 #FINISHED,STARTED,RUNNING,ROLLING_BACK,FAILED,ERROR,NULL
-                case $status in 
+                case $status in
                 FINISHED)
                     # finished
                     echo " $taskId status: $status "
@@ -658,7 +658,7 @@ while [ $count -le 4 ]
     do
         doStatus=$(checkDO)
         echo "DO check status: $doStatus"
-    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then 
+    if [ $deviceId == 1 ] && [[ "$doStatus" = *"online"* ]]; then
         echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do1.json
@@ -669,7 +669,7 @@ while [ $count -le 4 ]
             echo "do results: $results"
             break
         fi
-    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then 
+    elif [ $deviceId == 2 ] && [[ "$doStatus" = *"online"* ]]; then
         echo "running do for id:$deviceId"
         bigstart stop dhclient
         runDO do2.json

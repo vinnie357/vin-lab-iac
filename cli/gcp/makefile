@@ -1,9 +1,9 @@
 .PHONY: build shell
 
-pull: 
+pull:
 	docker pull google/cloud-sdk:latest
 
-build: 
+build:
 	docker build -t my-cloud-sdk-docker:alpine .
 
 shell: build run

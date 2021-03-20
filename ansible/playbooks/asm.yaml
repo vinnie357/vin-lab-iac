@@ -38,7 +38,7 @@
 
         echo  "wait for mcpd"
         checks=0
-        while [[ "$checks" -lt 120 ]]; do 
+        while [[ "$checks" -lt 120 ]]; do
             echo "checking mcpd"
             tmsh -a show sys mcp-state field-fmt | grep -q running
           if [ $? == 0 ]; then
@@ -48,12 +48,12 @@
           echo "mcpd not ready yet"
           let checks=checks+1
           sleep 10
-        done 
+        done
 
         function delay () {
         # $1 count #2 item
         count=0
-        while [[ $count  -lt $1 ]]; do 
+        while [[ $count  -lt $1 ]]; do
             echo "still working... $2"
             sleep 1
             count=$[$count+1]
@@ -100,7 +100,7 @@
         as3CheckUrl="/mgmt/shared/appsvcs/info"
         # ts
         tsUrl="/mgmt/shared/telemetry/declare"
-        tsCheckUrl="/mgmt/shared/telemetry/info" 
+        tsCheckUrl="/mgmt/shared/telemetry/info"
         DO_URL_POST="/mgmt/shared/declarative-onboarding"
         AS3_URL_POST="/mgmt/shared/appsvcs/declare"
         #
@@ -128,7 +128,7 @@
 
         for tool in $atc
         do
-            
+
             echo "downloading $tool"
             files=$(/usr/bin/curl -sk --interface mgmt https://api.github.com/repos/F5Networks/$tool/releases/latest | jq -r '.assets[] | select(.name | contains (".rpm")) | .browser_download_url')
             for file in $files
@@ -152,7 +152,7 @@
             while true
             do
                 iappApiStatus=$(curl -i -u $CREDS  http://localhost:8100$rpmInstallUrl | grep HTTP | awk '{print $2}')
-                case $iappApiStatus in 
+                case $iappApiStatus in
                     404)
                         echo "api not ready status: $iappApiStatus"
                         sleep 2
@@ -171,11 +171,11 @@
             done
           else
             echo " file: $filename not found"
-          fi 
+          fi
           while true
           do
             status=$(restcurl -u $CREDS $rpmInstallUrl/$install | jq -r .status)
-            case $status in 
+            case $status in
                 FINISHED)
                     # finished
                     echo " rpm: $filename task: $install status: $status"
@@ -317,18 +317,18 @@
         # AS3/Device/Telemetry is selected by looking at the class within the file
         atc_declaration_file: "{{doFilePath}}"
         atc_delay: 60
-        atc_retries: 20     
+        atc_retries: 20
     # atc_AS3_status, atc_DO_status , atc_TS_status
     - debug: var=atc_DO_status
     - name: list as3 files
       debug:
         msg: "{{item.name}}"
       loop: "{{ as3List }}"
-  
+
     - name: Create AS3 File
       template:
         src: "{{ item.template}}.j2"
-        dest: "{{as3FilePath}}"  
+        dest: "{{as3FilePath}}"
         mode: 'preserve'
       delegate_to: localhost
       loop: "{{ as3List }}"

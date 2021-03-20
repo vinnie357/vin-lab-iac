@@ -1,44 +1,44 @@
 #===============================================================================
 # vSphere Data
 #===============================================================================
-data vsphere_datacenter dc {
+data "vsphere_datacenter" "dc" {
   name = var.vsphere_datacenter
 }
 
-resource vsphere_folder afm {
+resource "vsphere_folder" "afm" {
   path          = "${var.vsphere_folder_env}/afm"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_datastore datastore {
+data "vsphere_datastore" "datastore" {
   name          = var.vm_datastore
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_compute_cluster cluster {
+data "vsphere_compute_cluster" "cluster" {
   name          = var.vsphere_cluster
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_network network1 {
+data "vsphere_network" "network1" {
   name          = var.vm_network_1
   datacenter_id = data.vsphere_datacenter.dc.id
 }
-data vsphere_network network2 {
+data "vsphere_network" "network2" {
   name          = var.vm_network_2
   datacenter_id = data.vsphere_datacenter.dc.id
 }
-data vsphere_network network3 {
+data "vsphere_network" "network3" {
   name          = var.vm_network_3
   datacenter_id = data.vsphere_datacenter.dc.id
 }
-data vsphere_network network4 {
+data "vsphere_network" "network4" {
   name          = var.vm_network_4
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_virtual_machine template_from_ovf {
+data "vsphere_virtual_machine" "template_from_ovf" {
   name          = var.vm_ovf
   datacenter_id = data.vsphere_datacenter.dc.id
 }
@@ -49,7 +49,7 @@ data vsphere_virtual_machine template_from_ovf {
 # }
 
 
-resource vsphere_tag Application {
+resource "vsphere_tag" "Application" {
   name        = "afm"
   category_id = var.vm_tags_application
   description = "Managed by Terraform"
@@ -130,13 +130,13 @@ resource vsphere_tag Application {
 #       uuid = "${random_uuid.as3_uuid.result}"
 #   }
 # }
-resource vsphere_virtual_machine afm-01 {
+resource "vsphere_virtual_machine" "afm-01" {
   name             = "${var.vm_name}-01-${var.vsphere_folder_env}.${var.vm_domain}"
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_id     = data.vsphere_datastore.datastore.id
   folder           = vsphere_folder.afm.path
 
-  tags = [ vsphere_tag.Application.id,var.vm_tags_environment ]  
+  tags = [vsphere_tag.Application.id, var.vm_tags_environment]
 
   num_cpus = var.vm_cpu
   memory   = var.vm_ram
@@ -170,8 +170,8 @@ resource vsphere_virtual_machine afm-01 {
   cdrom {
     client_device = true
   }
- 
- clone {
+
+  clone {
     template_uuid = data.vsphere_virtual_machine.template_from_ovf.id
     customize {
       linux_options {
@@ -187,40 +187,40 @@ resource vsphere_virtual_machine afm-01 {
       network_interface {}
       network_interface {}
       dns_server_list = var.dns_server_list
-      ipv4_gateway = var.vm_mgmt_gw
+      ipv4_gateway    = var.vm_mgmt_gw
     }
   }
-  
-#   vapp {
-#     properties = {
-#       #"guestinfo.tf.internal.id" = "42"
-#       "net.mgmt.addr" = "${var.vm_mgmt_ip}${count.index + 1}"
-#       "net.mgmt.gw" = "${var.vm_mgmt_gw}"
-#       "user.root.pwd" = "${var.vm_root_password}"
-#       "user.admin.pwd" = "${var.vm_admin_password}"
-#       #deployment_option: "{{var.size}}"
-#     }
-#   }
 
-#   provisioner "file" {
-#     source      = "${data.template_file.vm_onboard.rendered}"
-#     destination = "/tmp/startup_script.sh"
-#   }
+  #   vapp {
+  #     properties = {
+  #       #"guestinfo.tf.internal.id" = "42"
+  #       "net.mgmt.addr" = "${var.vm_mgmt_ip}${count.index + 1}"
+  #       "net.mgmt.gw" = "${var.vm_mgmt_gw}"
+  #       "user.root.pwd" = "${var.vm_root_password}"
+  #       "user.admin.pwd" = "${var.vm_admin_password}"
+  #       #deployment_option: "{{var.size}}"
+  #     }
+  #   }
 
-#   provisioner "remote-exec" {
-#     inline = [
-#       "chmod +x /tmp/startup_script.sh",
-#       "/tmp/startup_script.sh ${count.index + 1}",
-#     ]
-#   }
+  #   provisioner "file" {
+  #     source      = "${data.template_file.vm_onboard.rendered}"
+  #     destination = "/tmp/startup_script.sh"
+  #   }
+
+  #   provisioner "remote-exec" {
+  #     inline = [
+  #       "chmod +x /tmp/startup_script.sh",
+  #       "/tmp/startup_script.sh ${count.index + 1}",
+  #     ]
+  #   }
 }
-resource vsphere_virtual_machine afm-02 {
+resource "vsphere_virtual_machine" "afm-02" {
   name             = "${var.vm_name}-02-${var.vsphere_folder_env}.${var.vm_domain}"
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_id     = data.vsphere_datastore.datastore.id
   folder           = vsphere_folder.afm.path
 
-  tags = [ vsphere_tag.Application.id,var.vm_tags_environment ]  
+  tags = [vsphere_tag.Application.id, var.vm_tags_environment]
 
   num_cpus = var.vm_cpu
   memory   = var.vm_ram
@@ -254,8 +254,8 @@ resource vsphere_virtual_machine afm-02 {
   cdrom {
     client_device = true
   }
- 
- clone {
+
+  clone {
     template_uuid = data.vsphere_virtual_machine.template_from_ovf.id
     customize {
       linux_options {
@@ -271,32 +271,32 @@ resource vsphere_virtual_machine afm-02 {
       network_interface {}
       network_interface {}
       dns_server_list = var.dns_server_list
-      ipv4_gateway = var.vm_mgmt_gw
+      ipv4_gateway    = var.vm_mgmt_gw
     }
   }
-  
-#   vapp {
-#     properties = {
-#       #"guestinfo.tf.internal.id" = "42"
-#       "net.mgmt.addr" = "${var.vm_mgmt_ip}${count.index + 1}"
-#       "net.mgmt.gw" = "${var.vm_mgmt_gw}"
-#       "user.root.pwd" = "${var.vm_root_password}"
-#       "user.admin.pwd" = "${var.vm_admin_password}"
-#       #deployment_option: "{{var.size}}"
-#     }
-#   }
 
-#   provisioner "file" {
-#     source      = "${data.template_file.vm_onboard.rendered}"
-#     destination = "/tmp/startup_script.sh"
-#   }
+  #   vapp {
+  #     properties = {
+  #       #"guestinfo.tf.internal.id" = "42"
+  #       "net.mgmt.addr" = "${var.vm_mgmt_ip}${count.index + 1}"
+  #       "net.mgmt.gw" = "${var.vm_mgmt_gw}"
+  #       "user.root.pwd" = "${var.vm_root_password}"
+  #       "user.admin.pwd" = "${var.vm_admin_password}"
+  #       #deployment_option: "{{var.size}}"
+  #     }
+  #   }
 
-#   provisioner "remote-exec" {
-#     inline = [
-#       "chmod +x /tmp/startup_script.sh",
-#       "/tmp/startup_script.sh ${count.index + 1}",
-#     ]
-#   }
+  #   provisioner "file" {
+  #     source      = "${data.template_file.vm_onboard.rendered}"
+  #     destination = "/tmp/startup_script.sh"
+  #   }
+
+  #   provisioner "remote-exec" {
+  #     inline = [
+  #       "chmod +x /tmp/startup_script.sh",
+  #       "/tmp/startup_script.sh ${count.index + 1}",
+  #     ]
+  #   }
 }
 
 # outputs

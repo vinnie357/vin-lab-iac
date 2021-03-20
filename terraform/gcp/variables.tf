@@ -1,55 +1,55 @@
-variable GCP_SA_FILE {
+variable "GCP_SA_FILE" {
   description = "creds file name"
 }
-variable service_accounts {
-  type = map
+variable "service_accounts" {
+  type = map(any)
 }
 
-variable GCP_PROJECT_ID {
+variable "GCP_PROJECT_ID" {
   description = "project ID"
 }
 
-variable GCP_REGION {
+variable "GCP_REGION" {
   description = "region"
-  default = "us-east1"
+  default     = "us-east1"
 }
-variable GCP_ZONE {
+variable "GCP_ZONE" {
   description = "zone"
-  default = "us-east1-b"
+  default     = "us-east1-b"
 }
 
-variable appName {
+variable "appName" {
   description = "app name"
-  default = "app1"
+  default     = "app1"
 }
 
-variable prefix {
+variable "prefix" {
   description = "prefix for object names"
-  default = "vinlab"
+  default     = "vinlab"
 }
 
 # creds
-variable sshKeyPath {
-    description = "path to public key for ssh access"
-    default = "/root/.ssh/key.pub"
+variable "sshKeyPath" {
+  description = "path to public key for ssh access"
+  default     = "/root/.ssh/key.pub"
 }
 
-variable adminSrcAddr {
+variable "adminSrcAddr" {
   description = "admin source range in CIDR x.x.x.x/24"
 }
 
-variable gce_ssh_user {
+variable "gce_ssh_user" {
   description = "username for ssh key access"
-  default = "admin"
-  
+  default     = "admin"
+
 }
-variable adminPass {
+variable "adminPass" {
   description = " admin account password"
 }
 
-variable adminAccount {
+variable "adminAccount" {
   description = " admin account name"
 }
-variable projectPrefix {
+variable "projectPrefix" {
   description = "resource prefix"
 }

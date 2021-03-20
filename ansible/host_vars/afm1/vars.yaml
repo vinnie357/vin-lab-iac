@@ -13,10 +13,10 @@ device:
       - template: "bigip_ha_ve_vmware"
         hostname: "afm-01-dev.vin-lab.com"
         dsc:
-          primary: 
+          primary:
             host: "afm-01-dev.vin-lab.com"
             ip: "192.168.20.248"
-          secondary: 
+          secondary:
             host: "afm-02-dev.vin-lab.com"
             ip: "192.168.20.249"
         licenseKey:
@@ -81,14 +81,14 @@ device:
         template: "afm_as3"
         ip: "192.168.1.250"
         port: 443
-    irules: 
+    irules:
       pool_by_sni: |
             when CLIENTSSL_CLIENTHELLO {
 
             if { [SSL::extensions exists -type 0] } {
 
                 ## if the servername exists - send to the appropriate pool
-                ## you could also use a data group for this     
+                ## you could also use a data group for this
 
                 set tls_servername [string range [SSL::extensions -type 0] 9 [string length [SSL::extensions -type 0]]]
 
@@ -112,7 +112,7 @@ device:
             if { [SSL::extensions exists -type 0] } {
 
                 ## if the servername exists - send to the appropriate pool
-                ## you could also use a data group for this     
+                ## you could also use a data group for this
 
                 set tls_servername [string range [SSL::extensions -type 0] 9 [string length [SSL::extensions -type 0]]]
 

@@ -1,5 +1,5 @@
 # ssh keys
-Add ssh key to virtual machines		
+Add ssh key to virtual machines
 From GCP console, go to virtual machine, click Edit
 		Scroll down to SSH section
 		Add the following to the key area (all one line!):
@@ -15,11 +15,11 @@ networks interfaces
  network
  subnetwork
  accessconfigs
- 
+
  network
  subnetwork
- accessconfigs  
- 
+ accessconfigs
+
  network
  subnetwork
 
@@ -44,7 +44,7 @@ bigip config
  ntp servers
  time zone
  startup-scripts
- 
+
 outputs
  puplic ip
  private ip
@@ -54,7 +54,7 @@ app address
 
 
 # onboarding logs
-google_metadata_script_runner --script-type startup --debug 
+google_metadata_script_runner --script-type startup --debug
 cat /var/log/messages
 cat /var/log/startup-script.log
 
@@ -148,7 +148,7 @@ status=$(curl -s -u $CREDS http://localhost:8100/mgmt/shared/appsvcs/task/$task 
 echo "as3 post status: $status"
 
 rm /var/log/startup-script.log
-google_metadata_script_runner --script-type startup --debug 
+google_metadata_script_runner --script-type startup --debug
 
 
 # gcp routes/mtu
@@ -220,7 +220,7 @@ do
    else
        error_exit "$LINENO: An error has occurred while executing $CMD. Aborting"
    fi
-done 
+done
 
 ```
 
@@ -253,7 +253,7 @@ sys management-route default {
 
 ----------------------------------------------------------------------------------
 Net::Routes
-Name                Destination         Type       NextHop               Origin   
+Name                Destination         Type       NextHop               Origin
 ----------------------------------------------------------------------------------
 ext_gw_interface    10.0.30.1/32        interface  /Common/external      static
 ext_rt              10.0.30.0/24        gw         10.0.30.1             static

@@ -1,4 +1,4 @@
-  
+
 function info {
 echo "==== info ===="
 #vars

@@ -1,9 +1,9 @@
 f5-cis
 =========
 
-## Use this script to automatically: 
-## 1- Deploy F5 CC 
-## 2- Deploy our frontend-app using BIG-IP 
+## Use this script to automatically:
+## 1- Deploy F5 CC
+## 2- Deploy our frontend-app using BIG-IP
 ## 3- Deploy our ASPs
 ## 4- Replace kube-proxy
 ## 5- Deploy our backend application using ASP

@@ -2,32 +2,32 @@
 #===============================================================================
 # vSphere Data
 #===============================================================================
-data vsphere_datacenter dc {
+data "vsphere_datacenter" "dc" {
   name = var.vsphere_datacenter
 }
 
-resource vsphere_folder controller {
+resource "vsphere_folder" "controller" {
   path          = "${var.vsphere_folder_env}/controller"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_compute_cluster cluster {
+data "vsphere_compute_cluster" "cluster" {
   name          = var.vsphere_cluster
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_datastore datastore {
+data "vsphere_datastore" "datastore" {
   name          = var.vm_datastore
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_network network {
+data "vsphere_network" "network" {
   name          = var.vm_network
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_virtual_machine template {
+data "vsphere_virtual_machine" "template" {
   name          = var.vm_template
   datacenter_id = data.vsphere_datacenter.dc.id
 }
@@ -36,41 +36,41 @@ data vsphere_virtual_machine template {
 # vSphere Resources
 #===============================================================================
 
-resource vsphere_tag Application {
+resource "vsphere_tag" "Application" {
   name        = "controller"
   category_id = var.vm_tags_application
   description = "Managed by Terraform"
 }
 # https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/cloudinit_config
 
-data template_file metadata {
+data "template_file" "metadata" {
   template = file("${path.root}/vsphere/templates/ubuntu/metadata.yml")
-    vars = {
-    HOST=var.vm_name
+  vars = {
+    HOST = var.vm_name
   }
 }
-data template_file userdata {
+data "template_file" "userdata" {
   template = file("${path.root}/vsphere/templates/f5/nginx/controller_userdata.yml.tpl")
-    vars = {
+  vars = {
     #CONSUL_VERSION="1.7.2"
   }
 }
-data template_file kickstart {
+data "template_file" "kickstart" {
   template = file("${path.root}/vsphere/templates/ubuntu/kickstart.yml")
-    vars = {
-    USER="vinnie"
-    PASS=var.adminPass
-    PUBKEY=var.adminPubKey
+  vars = {
+    USER   = "vinnie"
+    PASS   = var.adminPass
+    PUBKEY = var.adminPubKey
   }
 }
-resource vsphere_virtual_machine standalone {
+resource "vsphere_virtual_machine" "standalone" {
   count            = var.vm_count
   name             = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}.${var.vm_domain}"
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_id     = data.vsphere_datastore.datastore.id
-  folder           = vsphere_folder.controller.path       
+  folder           = vsphere_folder.controller.path
 
-  tags = [ vsphere_tag.Application.id,var.vm_tags_environment ]  
+  tags = [vsphere_tag.Application.id, var.vm_tags_environment]
 
   num_cpus = var.vm_cpu
   memory   = var.vm_ram
@@ -87,7 +87,7 @@ resource vsphere_virtual_machine standalone {
     eagerly_scrub    = data.vsphere_virtual_machine.template.disks.0.eagerly_scrub
     thin_provisioned = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
   }
-  
+
   cdrom {
     client_device = true
   }
@@ -98,10 +98,10 @@ resource vsphere_virtual_machine standalone {
     "guestinfo.userdata.encoding" = "base64"
   }
   vapp {
-    properties ={
-      hostname = var.vm_name
+    properties = {
+      hostname    = var.vm_name
       instance-id = "id-ovf-${var.vm_name}"
-      user-data = base64encode(data.template_file.kickstart.rendered)
+      user-data   = base64encode(data.template_file.kickstart.rendered)
     }
   }
 

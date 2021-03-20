@@ -20,4 +20,3 @@
         #   query: "[?guest_name=='{{k8s-1-*}}']"
         vars:
           query: "[?contains(guest_name, 'k8s-1')]"
-      

@@ -39,7 +39,7 @@ function runAS3 () {
             # error
             echo "Error: $task status: $status "
             ;;
-        
+
         *)
             # other
             echo "status: $status"

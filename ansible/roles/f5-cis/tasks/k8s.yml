@@ -4,7 +4,7 @@
   - name: Create node File
     template:
       src: "bigip-node.j2"
-      dest: "{{filePath}}/{{ bigip.name }}_.yaml"  
+      dest: "{{filePath}}/{{ bigip.name }}_.yaml"
       mode: 'preserve'
     delegate_to: localhost
     loop: "{{ as3List }}"
@@ -23,8 +23,7 @@
   - name: Create cis File
     template:
       src: "f5-cc-deployment.j2"
-      dest: "{{filePath}}/f5-cc-deployment.yaml"  
+      dest: "{{filePath}}/f5-cc-deployment.yaml"
       mode: 'preserve'
     delegate_to: localhost
     loop: "{{ as3List }}"
-

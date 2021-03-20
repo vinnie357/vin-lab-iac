@@ -2,32 +2,32 @@
 #===============================================================================
 # vSphere Data
 #===============================================================================
-data vsphere_datacenter dc {
+data "vsphere_datacenter" "dc" {
   name = var.vsphere_datacenter
 }
 
-resource vsphere_folder legacy {
+resource "vsphere_folder" "legacy" {
   path          = "${var.vsphere_folder_env}/legacy"
   type          = "vm"
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_compute_cluster cluster {
+data "vsphere_compute_cluster" "cluster" {
   name          = var.vsphere_cluster
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_datastore datastore {
+data "vsphere_datastore" "datastore" {
   name          = var.vm_datastore
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_network network {
+data "vsphere_network" "network" {
   name          = var.vm_network
   datacenter_id = data.vsphere_datacenter.dc.id
 }
 
-data vsphere_virtual_machine template {
+data "vsphere_virtual_machine" "template" {
   name          = var.vm_template
   datacenter_id = data.vsphere_datacenter.dc.id
 }
@@ -35,24 +35,24 @@ data vsphere_virtual_machine template {
 #===============================================================================
 # vSphere Resources
 #===============================================================================
-resource vsphere_tag Application {
+resource "vsphere_tag" "Application" {
   name        = "legacy"
   category_id = var.vm_tags_application
   description = "Managed by Terraform"
 }
 
 
-resource vsphere_virtual_machine standalone {
+resource "vsphere_virtual_machine" "standalone" {
   count            = var.vm_count
   name             = "${var.vm_name}-${count.index + 1}-${var.vsphere_folder_env}.${var.vm_domain}"
   resource_pool_id = data.vsphere_compute_cluster.cluster.resource_pool_id
   datastore_id     = data.vsphere_datastore.datastore.id
   folder           = vsphere_folder.legacy.path
-  num_cpus = var.vm_cpu
-  memory   = var.vm_ram
-  guest_id = data.vsphere_virtual_machine.template.guest_id
+  num_cpus         = var.vm_cpu
+  memory           = var.vm_ram
+  guest_id         = data.vsphere_virtual_machine.template.guest_id
 
-  tags = [ vsphere_tag.Application.id,var.vm_tags_environment ]  
+  tags = [vsphere_tag.Application.id, var.vm_tags_environment]
 
   network_interface {
     network_id   = data.vsphere_network.network.id
@@ -88,4 +88,3 @@ resource vsphere_virtual_machine standalone {
     }
   }
 }
-

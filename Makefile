@@ -92,3 +92,23 @@ test4:
 	--volume ${DIR}:/workspace \
 	${CONTAINER_IMAGE} \
 	bash -c "terraform apply --target module.test --auto-approve"
+
+
+commit: buildDevContainer pre-commit
+
+buildDevContainer:
+	docker build --pull --rm -f "./.devcontainer/Dockerfile" -t vin-lab-iac-dc:latest ./.devcontainer
+
+devContainerShell:
+	@echo "commit shell ${WORK_DIR}"
+	@docker run --rm -it \
+	--volume ${DIR}:/workspace \
+	vin-lab-iac-dc \
+	sh -c "bash"
+
+pre-commit:
+	@echo "commit shell ${WORK_DIR}"
+	@docker run --rm -it \
+	--volume ${DIR}:/workspace \
+	vin-lab-iac-dc \
+	sh -c 'cd workspace/ && pre-commit run -a -v ; cat /home/f5-devops/.cache/pre-commit/pre-commit.log'

@@ -1,11 +1,11 @@
 #!/bin/bash
 # expects
 # https://github.com/F5Networks/f5-declarative-onboarding/raw/master/dist/f5-declarative-onboarding-1.5.0-11.noarch.rpm
-# https://github.com/F5Networks/f5-declarative-onboarding/raw/master/dist/f5-declarative-onboarding-1.5.0-11.noarch.rpm.sha256 
+# https://github.com/F5Networks/f5-declarative-onboarding/raw/master/dist/f5-declarative-onboarding-1.5.0-11.noarch.rpm.sha256
 # https://github.com/F5Networks/f5-appsvcs-extension/raw/master/dist/latest/f5-appsvcs-3.12.0-5.noarch.rpm
-# https://github.com/F5Networks/f5-appsvcs-extension/raw/master/dist/latest/f5-appsvcs-3.12.0-5.noarch.rpm.sha256 
-# https://github.com/F5Networks/f5-telemetry-streaming/raw/master/dist/f5-telemetry-1.4.0-1.noarch.rpm 
-# https://github.com/F5Networks/f5-telemetry-streaming/raw/master/dist/f5-telemetry-1.4.0-1.noarch.rpm.sha256 
+# https://github.com/F5Networks/f5-appsvcs-extension/raw/master/dist/latest/f5-appsvcs-3.12.0-5.noarch.rpm.sha256
+# https://github.com/F5Networks/f5-telemetry-streaming/raw/master/dist/f5-telemetry-1.4.0-1.noarch.rpm
+# https://github.com/F5Networks/f5-telemetry-streaming/raw/master/dist/f5-telemetry-1.4.0-1.noarch.rpm.sha256
 #
 # examples
 # rpm latest
@@ -59,7 +59,7 @@ as3Url="/mgmt/shared/appsvcs/declare"
 as3CheckUrl="/mgmt/shared/appsvcs/info"
 # ts
 tsUrl="/mgmt/shared/telemetry/declare"
-tsCheckUrl="/mgmt/shared/telemetry/available" 
+tsCheckUrl="/mgmt/shared/telemetry/available"
 #copy rpms from downloads to rest downloads
 # /shared/vadc/azure/waagent/custom-script/download/0/  /var/config/rest/downloads/
 # rpms
@@ -77,7 +77,7 @@ find $rpmFileUrl -name *.rpm -type f -exec sh -c '
         #echo $FN
         RESULT=$(cat $FN.sha256 | sha256sum --check )
         #echo "result $RESULT"
-        case "$RESULT" in 
+        case "$RESULT" in
         *OK*)
             # valid checksum
             echo "continue $FN"
@@ -111,7 +111,7 @@ do
   echo "installing $name"
   install=$(/usr/bin/curl -skv -w "%{http_code}" -X POST -H "Content-Type: application/json" -u azureuser: -o /dev/null -d "{"operation":"INSTALL","packageFilePath":"$filename"}"  https://$host:$dfl_mgmt_port$rpmInstallUrl)
   echo "status code $install"
-  case "$install" in 
+  case "$install" in
     200)
         # valid checksum
         echo "install started $name status: $install "
