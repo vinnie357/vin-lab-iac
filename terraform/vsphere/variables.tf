@@ -59,9 +59,28 @@ variable "bigip_root_password" {
 }
 
 ## admin
+variable "adminUser" {
+  description = "default admin account"
+}
 variable "adminPass" {
   description = "default admin pass"
 }
 variable "adminPubKey" {
   description = "admin public ssh key"
+}
+
+## vault
+variable "vaultToken" {
+  description = "vault token for run"
+}
+variable "vaultPort" {
+  description = "vault server port"
+  default     = 443
+}
+variable "vaultHost" {
+  description = "vault server host"
+}
+variable "vaultProtcol" {
+  description = "HTTP service type"
+  default     = "https"
 }

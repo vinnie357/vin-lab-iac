@@ -31,3 +31,19 @@ fileignoreconfig:
   checksum: 8e229755c6664742b047b70a50dfbe3beb94a0ee7d470539862e587b2625d1e4
 - filename: terraform/gcp/afm/afm.tf
   checksum: f10085b8ad474b82c6d3094c7490dcad75ddc9b041419a8b13c565f8f83203ce
+- filename: terraform/vsphere/templates/f5/nginx/plus/kickstart.yml
+  checksum: dd5db9aa3bb80fbba911b9453893e4a18c134b066784da880f88ce0b6b672249
+- filename: terraform/vsphere/templates/f5/nginx/nim/kickstart.yml
+  checksum: 5496ffff7b1cb8d3aa404b96ff22810cdd476b28c10331b6d2e0c03efe235f21
+- filename: terraform/vsphere/vsphere.tf
+  checksum: 19671f5edb917f680d6da7ed2f0a804e189a04349d5617cd35d096ae690c2083
+- filename: terraform/vsphere/nim/main.tf
+  checksum: 5f7a339ef79dd78c1bff0cfde2c95a6ed71f271e6b6317884ae0bc7ff1e4ebf3
+- filename: terraform/vsphere/nginx/main.tf
+  checksum: bc9ab92d15a70fec69d923f44e836efd1ddb4c8a058e392c9c25cdc771569419
+- filename: terraform/vsphere/modules/ubuntu/main.tf
+  checksum: 44ace5780ab9a97ab1f65ed082a833d8c810d8921970cc40dae3cf2de5752678
+- filename: terraform/vsphere/templates/f5/nginx/nim/userdata.yml
+  checksum: bf6600620d9793ab390f862b84a69bf0ff0f19a17ca1638f5752b051a6957d0c
+- filename: terraform/vsphere/templates/f5/nginx/plus/userdata.yml
+  checksum: a9e4fad142a07ea7d92f12354b1d3810ee4574550cb7077a8a8a77f5c1660ef7

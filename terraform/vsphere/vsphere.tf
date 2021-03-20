@@ -159,6 +159,52 @@ module "controller" {
   adminPubKey = var.adminPubKey
   adminPass   = var.adminPass
 }
+# Deploy nginx plus
+module "nginx" {
+  source = "./nginx"
+  #====================#
+  # vCenter connection #
+  #====================#
+  vsphere_datacenter = var.vsphere_datacenter
+  # vsphere_cluster = var.vsphere_cluster
+  vsphere_folder_env  = var.vsphere_folder_dev
+  vm_tags_application = vsphere_tag_category.Application.id
+  vm_tags_environment = vsphere_tag.dev.id
+  # vm info
+  vm_name         = "nginx"
+  vm_linked_clone = false
+  adminPubKey     = var.adminPubKey
+  adminPass       = var.adminPass
+  adminUser       = var.adminUser
+  # vault
+  vaultToken   = var.vaultToken
+  vaultPort    = var.vaultPort
+  vaultHost    = var.vaultHost
+  vaultProtcol = var.vaultProtcol
+}
+# Deploy nginx instance manager
+module "nim" {
+  source = "./nim"
+  #====================#
+  # vCenter connection #
+  #====================#
+  vsphere_datacenter = var.vsphere_datacenter
+  # vsphere_cluster = var.vsphere_cluster
+  vsphere_folder_env  = var.vsphere_folder_dev
+  vm_tags_application = vsphere_tag_category.Application.id
+  vm_tags_environment = vsphere_tag.dev.id
+  # vm info
+  vm_name         = "nim"
+  vm_linked_clone = false
+  adminPubKey     = var.adminPubKey
+  adminPass       = var.adminPass
+  adminUser       = var.adminUser
+  # vault
+  vaultToken   = var.vaultToken
+  vaultPort    = var.vaultPort
+  vaultHost    = var.vaultHost
+  vaultProtcol = var.vaultProtcol
+}
 # Deploy afm cluster
 module "afm" {
   source = "./afm"

@@ -82,3 +82,18 @@ variable "adminPass" {
 variable "adminPubKey" {
   description = "ssh public key for admin access"
 }
+## vault
+variable "vaultToken" {
+  description = "vault token for run"
+}
+variable "vaultPort" {
+  description = "vault server port"
+  default     = 443
+}
+variable "vaultHost" {
+  description = "vault server host"
+}
+variable "vaultProtcol" {
+  description = "HTTP service type"
+  default     = "https"
+}

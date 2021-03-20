@@ -8,6 +8,7 @@
 module "vsphere" {
   source = "./vsphere"
   # admin
+  adminUser   = var.adminAccount
   adminPubKey = var.adminPubKey
   adminPass   = var.adminPass
   # #====================#
@@ -19,6 +20,11 @@ module "vsphere" {
   #====================#
   bigip_admin_password = var.bigip_admin_password
   bigip_root_password  = var.bigip_root_password
+  # vault
+  vaultToken   = var.vaultToken
+  vaultPort    = var.vaultPort
+  vaultHost    = var.vaultHost
+  vaultProtcol = var.vaultProtcol
 }
 
 # # Deploy aws Module
