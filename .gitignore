@@ -20,6 +20,8 @@ f5devcentral.atc_deploy
 
 
 #https://github.com/github/gitignore/blob/master/Terraform.gitignore
+# lock files
+.terraform.lock.hcl
 # Local .terraform directories
 **/.terraform/*
 
