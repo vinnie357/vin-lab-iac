@@ -44,19 +44,19 @@ resource vsphere_tag Application {
 # https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/cloudinit_config
 
 data template_file metadata {
-  template = "${file("${path.root}/vsphere/templates/ubuntu/metadata.yml")}"
+  template = file("${path.root}/vsphere/templates/ubuntu/metadata.yml")
     vars = {
     HOST=var.vm_name
   }
 }
 data template_file userdata {
-  template = "${file("${path.root}/vsphere/templates/f5/nginx/controller_userdata.yml.tpl")}"
+  template = file("${path.root}/vsphere/templates/f5/nginx/controller_userdata.yml.tpl")
     vars = {
     #CONSUL_VERSION="1.7.2"
   }
 }
 data template_file kickstart {
-  template = "${file("${path.root}/vsphere/templates/ubuntu/kickstart.yml")}"
+  template = file("${path.root}/vsphere/templates/ubuntu/kickstart.yml")
     vars = {
     USER="vinnie"
     PASS=var.adminPass

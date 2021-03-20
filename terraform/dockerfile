@@ -1,29 +1,30 @@
 # Setup build arguments with default versions
-ARG TERRAFORM_VERSION=0.14.0
+ARG TERRAFORM_VERSION=0.13.6
 
 # Download Terraform binary
-FROM debian:stretch-20190506-slim as terraform
+FROM debian:buster-slim as terraform
 ARG TERRAFORM_VERSION
-RUN apt-get update
-RUN apt-get install -y curl
-RUN apt-get install -y unzip
-RUN apt-get install -y gnupg
-RUN curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS
-RUN curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-RUN curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig
 COPY hashicorp.asc hashicorp.asc
-RUN gpg --import hashicorp.asc
-RUN gpg --verify terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig terraform_${TERRAFORM_VERSION}_SHA256SUMS
-RUN grep terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform_${TERRAFORM_VERSION}_SHA256SUMS | sha256sum -c -
-RUN unzip -j terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+RUN  set -ex \
+     && apt-get update \
+     && apt-get install -y curl unzip gnupg
 
+RUN set -ex \
+    && curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS \
+    && curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip \
+    && curl -Os https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig \
+    && gpg --import hashicorp.asc \
+    && gpg --verify terraform_${TERRAFORM_VERSION}_SHA256SUMS.sig terraform_${TERRAFORM_VERSION}_SHA256SUMS \
+    && grep terraform_${TERRAFORM_VERSION}_linux_amd64.zip terraform_${TERRAFORM_VERSION}_SHA256SUMS | sha256sum -c - \
+    && unzip -j terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 # Build final image
-FROM debian:stretch-20190506-slim
-RUN apt-get update \
+FROM debian:buster-slim
+RUN set -ex \
+  && apt-get update \
   && apt-get install -y --no-install-recommends \
-    ca-certificates=20161130+nmu1+deb9u1 \
-    python3=3.5.3-1 \
+    ca-certificates \
+    python3 \
     curl \
     jq \
   && apt-get clean \

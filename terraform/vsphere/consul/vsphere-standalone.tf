@@ -3,7 +3,7 @@
 # vSphere Data
 #===============================================================================
 data vsphere_datacenter dc {
-  name = "${var.vsphere_datacenter}"
+  name = var.vsphere_datacenter
 }
 
 resource vsphere_folder consul {
@@ -43,19 +43,19 @@ resource vsphere_tag Application {
 # https://registry.terraform.io/providers/hashicorp/template/latest/docs/data-sources/cloudinit_config
 
 data template_file metadata {
-  template = "${file("${path.root}/vsphere/templates/hashicorp/consul/metadata.yml")}"
+  template = file("${path.root}/vsphere/templates/hashicorp/consul/metadata.yml")
     vars = {
     HOST=var.vm_name
   }
 }
 data template_file userdata {
-  template = "${file("${path.root}/vsphere/templates/hashicorp/consul/userdata.yml")}"
+  template = file("${path.root}/vsphere/templates/hashicorp/consul/userdata.yml")
     vars = {
     #CONSUL_VERSION="1.7.2"
   }
 }
 data template_file kickstart {
-  template = "${file("${path.root}/vsphere/templates/hashicorp/consul/kickstart.yml")}"
+  template = file("${path.root}/vsphere/templates/hashicorp/consul/kickstart.yml")
     vars = {
     USER="vinnie"
     PASS=var.adminPass
@@ -73,7 +73,7 @@ data template_cloudinit_config config {
   part {
     filename     = "init.cfg"
     content_type = "text/cloud-config"
-    content      = "${file("${path.root}/vsphere/templates/hashicorp/consul/init.sh.tpl")}"
+    content      = file("${path.root}/vsphere/templates/hashicorp/consul/init.sh.tpl")
   }
 
   # part {

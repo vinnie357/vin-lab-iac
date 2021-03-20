@@ -5,7 +5,7 @@
 
 
 # Deploy vsphere Module
-module vsphere {
+module "vsphere" {
   source = "./vsphere"
   # admin
   adminPubKey = var.adminPubKey
@@ -53,7 +53,7 @@ module vsphere {
 // }
 
 # Deploy ansible test Module
-module test {
+module "test" {
   source = "./test"
 
 }

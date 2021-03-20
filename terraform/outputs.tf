@@ -1,5 +1,5 @@
 # test
-output test {
+output "test" {
   value = "testoutput"
 }
 

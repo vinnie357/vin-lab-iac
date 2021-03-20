@@ -2,7 +2,7 @@
 # vSphere Data
 #===============================================================================
 data vsphere_datacenter dc {
-  name = "${var.vsphere_datacenter}"
+  name = var.vsphere_datacenter
 }
 
 resource vsphere_folder asm {

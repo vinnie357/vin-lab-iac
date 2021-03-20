@@ -4,7 +4,7 @@
 #https://github.com/terraform-providers/terraform-provider-vsphere/releases
 
 provider vsphere {
-  version        = "1.12.0"
+  # version        = "1.12.0"
   vsphere_server = var.vsphere_vcenter
   user           = var.vsphere_user
   password       = var.vsphere_password
