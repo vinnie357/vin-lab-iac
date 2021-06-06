@@ -121,17 +121,17 @@ module "k8s" {
   vm_tags_environment = vsphere_tag.dev.id
 }
 # Deploy k8s cluster for kubespray
-module "kubespray" {
-  source = "./kubespray"
-  #====================#
-  # vCenter connection #
-  #====================#
-  vsphere_datacenter = var.vsphere_datacenter
-  # vsphere_cluster = var.vsphere_cluster
-  vsphere_folder_env  = var.vsphere_folder_dev
-  vm_tags_application = vsphere_tag_category.Application.id
-  vm_tags_environment = vsphere_tag.dev.id
-}
+// module "kubespray" {
+//   source = "./kubespray"
+//   #====================#
+//   # vCenter connection #
+//   #====================#
+//   vsphere_datacenter = var.vsphere_datacenter
+//   # vsphere_cluster = var.vsphere_cluster
+//   vsphere_folder_env  = var.vsphere_folder_dev
+//   vm_tags_application = vsphere_tag_category.Application.id
+//   vm_tags_environment = vsphere_tag.dev.id
+// }
 # Deploy legacy machine
 module "legacy" {
   source = "./legacy"
@@ -299,4 +299,57 @@ module "consul" {
   # admin
   adminPubKey = var.adminPubKey
   adminPass   = var.adminPass
+}
+
+# Deploy test machine
+module "test" {
+  source = "./test"
+  #====================#
+  # vCenter connection #
+  #====================#
+  vsphere_datacenter = var.vsphere_datacenter
+  # vsphere_cluster = var.vsphere_cluster
+  vsphere_folder_env  = var.vsphere_folder_dev
+  vm_tags_application = vsphere_tag_category.Application.id
+  vm_tags_environment = vsphere_tag.dev.id
+  # vm info
+  vm_template     = "templates/ubuntu/ubuntu-18.04"
+  vm_name         = "test"
+  vm_linked_clone = true
+  adminPubKey     = var.adminPubKey
+  adminPass       = var.adminPass
+  adminUser       = var.adminUser
+  # vault
+  vaultToken   = var.vaultToken
+  vaultPort    = var.vaultPort
+  vaultHost    = var.vaultHost
+  vaultProtcol = var.vaultProtcol
+}
+
+
+# Deploy k8s cluster
+module "k8s2" {
+  source = "./k8s2"
+  #====================#
+  # vCenter connection #
+  #====================#
+  vsphere_datacenter = var.vsphere_datacenter
+  # vsphere_cluster = var.vsphere_cluster
+  vsphere_folder_env  = var.vsphere_folder_dev
+  vm_tags_application = vsphere_tag_category.Application.id
+  vm_tags_environment = vsphere_tag.dev.id
+  # vm info
+  vm_name         = "k8s2"
+  vm_linked_clone = true
+  adminPubKey     = var.adminPubKey
+  adminPass       = var.adminPass
+  adminUser       = var.adminUser
+  # vault
+  // vaultToken   = var.vaultToken
+  // vaultPort    = var.vaultPort
+  // vaultHost    = var.vaultHost
+  // vaultProtcol = var.vaultProtcol
+  #cluster info
+  masterCount = 1
+  nodeCount   = 2
 }

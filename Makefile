@@ -101,14 +101,16 @@ buildDevContainer:
 
 devContainerShell:
 	@echo "commit shell ${WORK_DIR}"
-	@docker run --rm -it \
+	@docker run --rm -w="/workspace" -it \
 	--volume ${DIR}:/workspace \
+	--volume /var/run/docker.sock:/var/run/docker-host.sock \
+	--privileged \
 	vin-lab-iac-dc \
 	sh -c "bash"
 
 pre-commit:
 	@echo "commit shell ${WORK_DIR}"
-	@docker run --rm -it \
+	@docker run --rm -w="/workspace" -it \
 	--volume ${DIR}:/workspace \
 	vin-lab-iac-dc \
-	sh -c 'cd workspace/ && pre-commit run -a -v ; cat /home/f5-devops/.cache/pre-commit/pre-commit.log'
+	sh -c 'pre-commit run -a -v'

@@ -524,3 +524,16 @@ example:
 
 https://blog.linoproject.net/cloud-init-with-terraform-in-vsphere-environment/
 https://github.com/linoproject/terraform/tree/master/vsphere-cloudinit
+
+### app flow
+
+external dns record - godaddy /f5 cs dns
+internal dns record - as3 gtm
+sni firewall rule - as3 cis/afm
+certbot renew/issue - certbot bash/letsencrypt
+push to nginx - certs bash/scp/ssh
+create nginxconf - NIM post
+create kic conf - kubectl
+create app ingress for kic - kubectl
+create app service - kubectl
+create app deployment - kubectl

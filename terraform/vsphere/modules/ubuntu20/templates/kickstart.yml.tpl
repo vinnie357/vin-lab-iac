@@ -1,0 +1,34 @@
+#cloud-config
+chpasswd: #Change your local password here
+    list: |
+      ${USER}:${PASS}
+    expire: false
+users:
+  - default #Define a default user
+  - name: ${USER}
+    gecos: ${USER}
+    lock_passwd: false
+    groups: sudo, users, admin, docker
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ${PUBKEY}
+system_info:
+  default_user:
+    name: default-user
+    lock_passwd: false
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+#disable_root: false #Enable root acce
+ssh_pwauth: yes #Use pwd to access (otherwise follow official doc to use ssh-keys)
+random_seed:
+    file: /dev/urandom
+    command: ["pollinate", "-r", "-s", "https://entropy.ubuntu.com"]
+    command_required: true
+package_upgrade: true
+packages:
+  - python3-pip #Dependency package for cur
+runcmd:
+   - curl -sSL https://raw.githubusercontent.com/vmware/cloud-init-vmware-guestinfo/master/install.sh | sh - #Install cloud-init
+power_state:
+  timeout: 30
+  mode: reboot

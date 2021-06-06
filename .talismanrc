@@ -47,3 +47,17 @@ fileignoreconfig:
   checksum: bf6600620d9793ab390f862b84a69bf0ff0f19a17ca1638f5752b051a6957d0c
 - filename: terraform/vsphere/templates/f5/nginx/plus/userdata.yml
   checksum: a9e4fad142a07ea7d92f12354b1d3810ee4574550cb7077a8a8a77f5c1660ef7
+- filename: terraform/vsphere/k8s2/main.tf
+  checksum: 511ae07e0ad7420432dcd8ecef158815da8c42aa599bbd4decf8faedf9ca49bc
+- filename: terraform/vsphere/modules/ubuntu20/templates/kickstart.yml.tpl
+  checksum: f2c50b21f77bf98a58417b60a18ca1e5aa72041dfc713467b2c70a05a437678e
+- filename: terraform/vsphere/modules/k8s_ubuntu/main.tf
+  checksum: ceb5755953322199f08c993324498908094645920dedbfa4883c2850d9fb802b
+- filename: terraform/vsphere/vsphere.tf
+  checksum: 81949c3804cf37149f6d7638eea362cab823a18c16f8577b2beacf8af7707d34
+- filename: terraform/vsphere/test/main.tf
+  checksum: 9949aae11d17c520a4decd1527a4efeb63c008ccfaf6ba3e9907fd6643fc2089
+- filename: terraform/vsphere/modules/ubuntu20/main.tf
+  checksum: 064d8554e454a5c63e383f2fd180a59784a7f0ca7b892b996da1a19d3a83dbd4
+- filename: terraform/vsphere/modules/k8s_ubuntu/templates/master/userdata.yml.tpl
+  checksum: 4f3159c6243b58e8c76ca43d516930998f4a2157457262053bb171d5e606ee44
