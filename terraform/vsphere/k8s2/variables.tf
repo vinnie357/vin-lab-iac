@@ -32,3 +32,17 @@ variable "vm_tags_application" {}
 variable "vm_tags_environment" {}
 
 variable "vm_name" {}
+
+variable "cniUrl" {
+  default = "https://docs.projectcalico.org/manifests/calico.yaml"
+  description = <<EOD
+  cni appplied to master
+  default is calico
+  EOD
+}
+variable "vaultUrl" {
+  description = "URL for vault"
+}
+variable "vaultToken" {
+  description = "token for vault"
+}

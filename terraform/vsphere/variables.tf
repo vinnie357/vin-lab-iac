@@ -84,3 +84,6 @@ variable "vaultProtcol" {
   description = "HTTP service type"
   default     = "https"
 }
+variable "vaultUrl" {
+  description = "vault url"
+}

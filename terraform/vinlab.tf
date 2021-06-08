@@ -25,6 +25,7 @@ module "vsphere" {
   vaultPort    = var.vaultPort
   vaultHost    = var.vaultHost
   vaultProtcol = var.vaultProtcol
+  vaultUrl     = var.vaultUrl
 }
 
 # # Deploy aws Module

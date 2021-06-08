@@ -38,6 +38,9 @@ data "template_file" "masterUserData" {
     HOST      = format("%s-master-%s-%s", var.vm_name, (count.index), var.vsphere_folder_env)
     podCidr   = var.podCidr
     dnsDomain = var.vm_domain
+    cniUrl    = var.cniUrl
+    vaultUrl  = var.vaultUrl
+    vaultToken = var.vaultToken
   }
 }
 
@@ -71,6 +74,8 @@ data "template_file" "nodeUserData" {
   vars = {
     HOST      = format("%s-node-%s-%s", var.vm_name, (count.index), var.vsphere_folder_env)
     dnsDomain = var.vm_domain
+    vaultUrl  = var.vaultUrl
+    vaultToken = var.vaultToken
   }
 }
 

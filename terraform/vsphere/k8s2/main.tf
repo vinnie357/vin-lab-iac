@@ -13,4 +13,7 @@ module "k8s_ubuntu" {
   adminUser           = var.adminUser
   vm_name             = var.vm_name
   vm_domain           = var.vm_domain
+  cniUrl              = var.cniUrl
+  vaultUrl            = var.vaultUrl
+  vaultToken          = var.vaultToken
 }

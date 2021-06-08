@@ -41,3 +41,16 @@ variable "vm_name" {
 variable "podCidr" {
   default = "10.10.0.0/16"
 }
+variable "cniUrl" {
+  default = "https://docs.projectcalico.org/manifests/calico.yaml"
+  description = <<EOD
+  cni appplied to master
+  default is calico
+  EOD
+}
+variable "vaultUrl" {
+  description = "URL for vault"
+}
+variable "vaultToken" {
+  description = "token for vault"
+}

@@ -112,27 +112,57 @@ write_files:
         nsupdate /dns.txt
 
         # nsm
-        # tee /nsm_conf.yaml <<EOF
-        # apiVersion: kubeadm.k8s.io/v1beta2
-        # kind: ClusterConfiguration
-        # apiServer:
-        #   extraArgs:
-        #     service-account-signing-key-file: /etc/kubernetes/pki/sa.key
-        #     service-account-issuer: api
-        #     service-account-api-audiences: api
-        # EOF
+        #https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2
+        tee /nsm_conf.yaml <<EOF
+        apiVersion: kubeadm.k8s.io/v1beta2
+        kind: ClusterConfiguration
+        controlPlaneEndpoint: ${HOST}.${dnsDomain}
+        apiServer:
+          extraArgs:
+            advertise-address: $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+            service-account-signing-key-file: /etc/kubernetes/pki/sa.key
+            service-account-issuer: api
+            service-account-api-audiences: api
+        networking:
+          podSubnet: "${podCidr}" # --pod-network-cidr
+        EOF
 
+        ## start default
         # kubeadm init \
         # --pod-network-cidr=${podCidr} \
-        # --control-plane-endpoint=${HOST}.${dnsDomain} \
-        # --config /nsm_conf.yaml
-
+        # --control-plane-endpoint=${HOST}.${dnsDomain}
+        
+        ## start nsm
         kubeadm init \
-        --pod-network-cidr=${podCidr} \
-        --control-plane-endpoint=${HOST}.${dnsDomain}
+        --config=/nsm_conf.yaml
+        export KUBECONFIG=/etc/kubernetes/admin.conf
 
-        kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
-
+        ## apply cni
+        kubectl apply -f ${cniUrl}
+        # while [ $? -ne 0 ]; do
+        #   kubectl apply -f ${cniUrl}
+        # done
+        #
+        ## send join command to vault
+        joinCommand=$(kubeadm token create --print-join-command | base64 -w 0)
+        vaultToken=${vaultToken}
+        vaultUrl=${vaultUrl}
+        secretName=${HOST}
+        payload=$(cat -<<EOF
+        {
+          "data": {
+              "joinCommand": "$(kubeadm token create --print-join-command | base64 -w 0)",
+              "dns": "$(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ${HOST}.${dnsDomain}"
+            }
+        }
+        EOF
+        )
+        curl  \
+        --header "X-Vault-Token: $vaultToken" \
+        --request POST \
+        --data "$payload" \
+        $vaultUrl/v1/secret/data/$secretName
+        
         echo "==== done ===="
 runcmd:
     - bash /setup.sh
