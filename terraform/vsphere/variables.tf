@@ -87,3 +87,7 @@ variable "vaultProtcol" {
 variable "vaultUrl" {
   description = "vault url"
 }
+variable "dnsServer" {
+  description = "default server for nsupdate"
+  default     = "ad.vin-lab.com"
+}

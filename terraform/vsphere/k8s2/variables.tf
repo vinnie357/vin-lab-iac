@@ -34,7 +34,7 @@ variable "vm_tags_environment" {}
 variable "vm_name" {}
 
 variable "cniUrl" {
-  default = "https://docs.projectcalico.org/manifests/calico.yaml"
+  default     = "https://docs.projectcalico.org/manifests/calico.yaml"
   description = <<EOD
   cni appplied to master
   default is calico
@@ -45,4 +45,7 @@ variable "vaultUrl" {
 }
 variable "vaultToken" {
   description = "token for vault"
+}
+variable "dnsServer" {
+  description = "default server for nsupdate"
 }

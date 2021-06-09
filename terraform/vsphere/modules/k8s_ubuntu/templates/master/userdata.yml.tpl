@@ -106,10 +106,14 @@ write_files:
         # hosts
         echo "$(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ${HOST}.${dnsDomain}" >> /etc/hosts
         # register dns
-        tee /dns.txt <<EOF
-        update add ${HOST}.${dnsDomain}. 600 a $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-        EOF
-        nsupdate /dns.txt
+        echo "server ${DNS_SERVER}
+        update add ${HOST}.${dnsDomain} 60 A $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+        send" | nsupdate
+        #tee /dns.txt <<EOF
+        #server ${DNS_SERVER}
+        #update add ${HOST}.${dnsDomain}. 600 a $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+        #EOF
+        #nsupdate /dns.txt
 
         # nsm
         #https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2
@@ -131,7 +135,7 @@ write_files:
         # kubeadm init \
         # --pod-network-cidr=${podCidr} \
         # --control-plane-endpoint=${HOST}.${dnsDomain}
-        
+
         ## start nsm
         kubeadm init \
         --config=/nsm_conf.yaml
@@ -162,7 +166,7 @@ write_files:
         --request POST \
         --data "$payload" \
         $vaultUrl/v1/secret/data/$secretName
-        
+
         echo "==== done ===="
 runcmd:
     - bash /setup.sh

@@ -16,4 +16,5 @@ module "k8s_ubuntu" {
   cniUrl              = var.cniUrl
   vaultUrl            = var.vaultUrl
   vaultToken          = var.vaultToken
+  dnsServer           = var.dnsServer
 }

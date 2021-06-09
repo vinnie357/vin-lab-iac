@@ -100,3 +100,6 @@ variable "vaultProtcol" {
 variable "vaultUrl" {
   description = "vault url"
 }
+variable "dnsServer" {
+  description = "default server for nsupdate"
+}

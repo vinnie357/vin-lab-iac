@@ -338,6 +338,7 @@ module "k8s2" {
   vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
+  dnsServer           = var.dnsServer
   # vm info
   vm_name         = "k8s2"
   vm_linked_clone = true
@@ -345,7 +346,7 @@ module "k8s2" {
   adminPass       = var.adminPass
   adminUser       = var.adminUser
   # vault
-  vaultToken   = var.vaultToken
+  vaultToken = var.vaultToken
   vaultUrl   = var.vaultUrl
   // vaultPort    = var.vaultPort
   // vaultHost    = var.vaultHost
@@ -365,6 +366,7 @@ module "k8s3" {
   vsphere_folder_env  = var.vsphere_folder_dev
   vm_tags_application = vsphere_tag_category.Application.id
   vm_tags_environment = vsphere_tag.dev.id
+  dnsServer           = var.dnsServer
   # vm info
   vm_name         = "k8s3"
   vm_linked_clone = true
@@ -372,15 +374,15 @@ module "k8s3" {
   adminPass       = var.adminPass
   adminUser       = var.adminUser
   # vault
-  vaultToken   = var.vaultToken
+  vaultToken = var.vaultToken
   // vaultPort    = var.vaultPort
-  vaultUrl   = var.vaultUrl
+  vaultUrl = var.vaultUrl
   // vaultProtcol = var.vaultProtcol
   #cluster info
   masterCount = 1
-  nodeCount   = 1
+  nodeCount   = 2
   # calico
-  cniUrl      = "https://docs.projectcalico.org/manifests/calico.yaml"
+  cniUrl = "https://docs.projectcalico.org/manifests/calico.yaml"
   # flannel
   #cniUrl      = "https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
 }

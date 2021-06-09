@@ -35,12 +35,13 @@ data "template_file" "masterUserData" {
   count    = var.masterCount
   template = file("${path.module}/templates/master/userdata.yml.tpl")
   vars = {
-    HOST      = format("%s-master-%s-%s", var.vm_name, (count.index), var.vsphere_folder_env)
-    podCidr   = var.podCidr
-    dnsDomain = var.vm_domain
-    cniUrl    = var.cniUrl
-    vaultUrl  = var.vaultUrl
+    HOST       = format("%s-master-%s-%s", var.vm_name, (count.index), var.vsphere_folder_env)
+    podCidr    = var.podCidr
+    dnsDomain  = var.vm_domain
+    cniUrl     = var.cniUrl
+    vaultUrl   = var.vaultUrl
     vaultToken = var.vaultToken
+    DNS_SERVER = var.dnsServer
   }
 }
 
@@ -72,10 +73,11 @@ data "template_file" "nodeUserData" {
   count    = var.nodeCount
   template = file("${path.module}/templates/nodes/userdata.yml.tpl")
   vars = {
-    HOST      = format("%s-node-%s-%s", var.vm_name, (count.index), var.vsphere_folder_env)
-    dnsDomain = var.vm_domain
-    vaultUrl  = var.vaultUrl
+    HOST       = format("%s-node-%s-%s", var.vm_name, (count.index), var.vsphere_folder_env)
+    dnsDomain  = var.vm_domain
+    vaultUrl   = var.vaultUrl
     vaultToken = var.vaultToken
+    DNS_SERVER = var.dnsServer
   }
 }
 

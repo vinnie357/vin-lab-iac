@@ -100,10 +100,14 @@ write_files:
         # hosts
         echo "$(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}') ${HOST}.${dnsDomain}" >> /etc/hosts
         # register dns
-        tee /dns.txt <<EOF
-        update add ${HOST}.${dnsDomain}. 600 a $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-        EOF
-        nsupdate /dns.txt
+        echo "server ${DNS_SERVER}
+        update add ${HOST}.${dnsDomain} 60 A $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+        send" | nsupdate
+        # tee /dns.txt <<EOF
+        # server ${DNS_SERVER}
+        # update add ${HOST}.${dnsDomain}. 600 a $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+        # EOF
+        # nsupdate /dns.txt
 
         # wait for control node
         echo "waiting for control node"
@@ -125,7 +129,7 @@ write_files:
         echo "do join command"
 
         echo $secretData | jq -r .data.data.joinCommand | base64 -d | bash
-        
+
         echo "==== done ===="
 runcmd:
     - bash /setup.sh
