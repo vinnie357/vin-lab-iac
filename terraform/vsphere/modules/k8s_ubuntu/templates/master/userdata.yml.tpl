@@ -116,11 +116,13 @@ write_files:
         #nsupdate /dns.txt
 
         # nsm
+        clusterName=$(echo ${HOST} | cut -d "-" -f 1)
         #https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta2
         tee /nsm_conf.yaml <<EOF
         apiVersion: kubeadm.k8s.io/v1beta2
         kind: ClusterConfiguration
         controlPlaneEndpoint: ${HOST}.${dnsDomain}
+        clusterName: $clusterName
         apiServer:
           extraArgs:
             advertise-address: $(ip -4 addr show ens192 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')

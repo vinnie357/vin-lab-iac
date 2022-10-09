@@ -61,3 +61,5 @@ fileignoreconfig:
   checksum: 064d8554e454a5c63e383f2fd180a59784a7f0ca7b892b996da1a19d3a83dbd4
 - filename: terraform/vsphere/modules/k8s_ubuntu/templates/master/userdata.yml.tpl
   checksum: 4f3159c6243b58e8c76ca43d516930998f4a2157457262053bb171d5e606ee44
+- filename: csc/dns/pihole/docker-compose.yaml
+  checksum: 581b364ff311791ab2637bf2d2cf37b40312e58456771a3dd9602f26f2ac1f37

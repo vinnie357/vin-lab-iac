@@ -14,7 +14,10 @@ creds/aws/*.json
 creds/azure/*.json
 !creds/azure/my_example_creds.json
 f5devcentral.atc_deploy
-
+netbox-docker
+# pihole
+csc/dns/pihole/etc-pihole/*
+csc/dns/pihole/etc-dnsmasq.d/*
 #https://github.com/github/gitignore/blob/master/Global/Ansible.gitignore
 *.retry
 
